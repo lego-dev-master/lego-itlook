@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Ticket de Servicio{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{{ url_for('tickets.index') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left"></i> Volver a Tickets
+  </a>
+  <h2 class="mt-2 mb-1"><i class="bi bi-ticket-plus text-info me-2"></i>Abrir Nuevo Ticket de Servicio</h2>
+  <p class="text-muted mb-0">Registro de requerimiento, prioridad, clasificación y asignación técnica</p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="glass-card p-4">
+      <form method="POST" action="{{ url_for('tickets.create') }}">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Cliente Requerente *</label>
+            <select class="form-select" id="client_id" name="client_id" required>
+              <option value="">-- Seleccionar Cliente --</option>
+              {% for c in clients %}
+              <option value="{{ c.id }}" {% if preselected_client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Sede / Ubicación</label>
+            <select class="form-select" id="location_id" name="location_id">
+              <option value="">-- Seleccionar Sede (Opcional) --</option>
+              {% for loc in locations %}
+              <option value="{{ loc.id }}">{{ loc.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Contacto Solicitante (Notificaciones)</label>
+            <select class="form-select" id="contact_id" name="contact_id">
+              <option value="">-- Seleccionar Contacto --</option>
+              {% for cont in contacts %}
+              <option value="{{ cont.id }}" {% if cont.is_primary %}selected{% endif %}>{{ cont.name }} ({{ cont.email }}){% if cont.is_primary %} [Principal]{% endif %}</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted">Se enviará notificación por correo al abrir/cerrar el ticket.</small>
+          </div>
+
+
+
+          <div class="col-md-6">
+            <label class="form-label">Equipo Afectado (Hoja de Vida)</label>
+            <select class="form-select" id="asset_id" name="asset_id">
+              <option value="">-- Seleccionar Equipo (Opcional) --</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Técnico Asignado</label>
+            <select class="form-select" name="assigned_to_id">
+              <option value="">-- Seleccionar Técnico --</option>
+              {% for tech in technicians %}
+              <option value="{{ tech.id }}" {% if tech.id == current_user.id %}selected{% endif %}>{{ tech.name }} ({{ tech.role }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12"><hr class="border-secondary opacity-25 my-2"></div>
+
+          <div class="col-md-8">
+            <label class="form-label">Título / Asunto del Ticket *</label>
+            <input type="text" class="form-control" name="title" required placeholder="Ej: Falla de conexión a Servidor de Archivos / Reemplazo de Disco">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Tipo de Servicio *</label>
+            <select class="form-select" name="service_type" required>
+              <option value="Soporte">Soporte Técnico</option>
+              <option value="Mantenimiento">Mantenimiento</option>
+              <option value="Proyecto">Proyecto / Infraestructura</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Prioridad (SLA) *</label>
+            <select class="form-select" name="priority" required>
+              <option value="Crítica">Crítica (SLA: 2 horas)</option>
+              <option value="Alta">Alta (SLA: 4 horas)</option>
+              <option value="Media" selected>Media (SLA: 8 horas)</option>
+              <option value="Baja">Baja (SLA: 24 horas)</option>
+            </select>
+            <small class="text-muted">El límite de tiempo SLA se calcula automáticamente.</small>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Descripción Detallada del Problema / Solicitud *</label>
+            <textarea class="form-control" name="description" rows="4" required placeholder="Indique síntomas, mensajes de error o tareas a ejecutar..."></textarea>
+          </div>
+
+          <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+            <a href="{{ url_for('tickets.index') }}" class="btn btn-secondary-custom">Cancelar</a>
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bi-check-circle me-1"></i> Registrar Ticket
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

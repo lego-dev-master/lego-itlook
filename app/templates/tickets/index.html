@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Tickets de Servicio y SLA{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-ticket-perforated-fill text-info me-2"></i>Tickets de Servicio</h2>
+    <p class="text-muted mb-0">Ciclo de vida del soporte técnico, gestión de SLA y seguimiento de intervenciones</p>
+  </div>
+  <a href="{{ url_for('tickets.create') }}" class="btn btn-primary-custom">
+    <i class="bi bi-plus-circle me-1"></i> Abrir Nuevo Ticket
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="glass-card p-3 mb-4">
+  <form method="GET" action="{{ url_for('tickets.index') }}" class="row g-3">
+    <div class="col-md-3">
+      <select class="form-select" name="client_id" onchange="this.form.submit()">
+        <option value="">-- Todos los Clientes --</option>
+        {% for c in clients %}
+        <option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" name="priority" onchange="this.form.submit()">
+        <option value="">-- Prioridad --</option>
+        <option value="Crítica" {% if priority_filter == 'Crítica' %}selected{% endif %}>Crítica (SLA 2h)</option>
+        <option value="Alta" {% if priority_filter == 'Alta' %}selected{% endif %}>Alta (SLA 4h)</option>
+        <option value="Media" {% if priority_filter == 'Media' %}selected{% endif %}>Media (SLA 8h)</option>
+        <option value="Baja" {% if priority_filter == 'Baja' %}selected{% endif %}>Baja (SLA 24h)</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" name="status" onchange="this.form.submit()">
+        <option value="">-- Estado --</option>
+        <option value="Abierto" {% if status_filter == 'Abierto' %}selected{% endif %}>Abierto</option>
+        <option value="En Proceso" {% if status_filter == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+        <option value="Espera Cliente" {% if status_filter == 'Espera Cliente' %}selected{% endif %}>Espera Cliente</option>
+        <option value="Resuelto" {% if status_filter == 'Resuelto' %}selected{% endif %}>Resuelto</option>
+        <option value="Cerrado" {% if status_filter == 'Cerrado' %}selected{% endif %}>Cerrado</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select" name="sla" onchange="this.form.submit()">
+        <option value="">-- Monitoreo SLA --</option>
+        <option value="breached" {% if sla_filter == 'breached' %}selected{% endif %}>SLA Vencido / Incumplido</option>
+        <option value="ontime" {% if sla_filter == 'ontime' %}selected{% endif %}>SLA En Tiempo</option>
+      </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-center">
+      <div class="form-check me-3">
+        <input class="form-check-input" type="checkbox" id="my_tickets" name="my_tickets" value="1" {% if assigned_to_me %}checked{% endif %} onchange="this.form.submit()">
+        <label class="form-check-label small text-muted" for="my_tickets">Mis Asignados</label>
+      </div>
+      <button type="submit" class="btn btn-secondary-custom btn-sm">Filtrar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Tickets Table -->
+<div class="glass-card p-4">
+  <div class="table-responsive">
+    <table class="table table-custom">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Cliente</th>
+          <th>Asunto / Tipo</th>
+          <th>Prioridad</th>
+          <th>Técnico Asignado</th>
+          <th>Estado</th>
+          <th>Límite SLA</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tickets %}
+        <tr>
+          <td class="fw-bold text-info">
+            <a href="{{ url_for('tickets.detail', ticket_id=t.id) }}" class="text-info text-decoration-none">
+              {{ t.ticket_code }}
+            </a>
+          </td>
+          <td>
+            <div class="fw-bold text-white">{{ t.client.company_name }}</div>
+            <small class="text-muted">{{ t.location.name if t.location else 'Principal' }}</small>
+          </td>
+          <td>
+            <div class="fw-bold text-white text-truncate" style="max-width:220px;">{{ t.title }}</div>
+            <small class="badge bg-dark border border-secondary text-muted me-1">{{ t.service_type }}</small>
+            {% if t.asset %}
+              <small class="badge bg-dark border border-info text-info"><i class="bi bi-pc-display me-1"></i>{{ t.asset.internal_code }}</small>
+            {% endif %}
+          </td>
+          <td><span class="badge {{ t.priority_badge_class }}">{{ t.priority }}</span></td>
+          <td>
+            {% if t.assigned_to_user %}
+              <small class="text-white"><i class="bi bi-person-circle me-1"></i>{{ t.assigned_to_user.name }}</small>
+            {% else %}
+              <span class="badge bg-secondary">Sin Asignar</span>
+            {% endif %}
+          </td>
+          <td><span class="badge {{ t.status_badge_class }}">{{ t.status }}</span></td>
+          <td>
+            <div class="small">
+              {{ t.sla_due_at.strftime('%Y-%m-%d %H:%M') }}
+            </div>
+            {% if t.is_sla_breached %}
+              <span class="badge bg-danger" title="Límite SLA excedido"><i class="bi bi-alarm-fill"></i> Incumplido</span>
+            {% else %}
+              <span class="badge bg-success" title="SLA en tiempo"><i class="bi bi-check-circle"></i> En Tiempo</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('tickets.detail', ticket_id=t.id) }}" class="btn btn-sm btn-outline-info">
+              Atender <i class="bi bi-arrow-right"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-ticket-perforated fs-1 d-block mb-3 text-info"></i>
+            No hay tickets registrados con los criterios seleccionados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

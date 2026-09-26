@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración de Parámetros del Sistema{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-gear-fill text-info me-2"></i>Parámetros del Sistema & Correo SMTP</h2>
+    <p class="text-muted mb-0">Configuración dinámica de notificaciones por correo y conexión SMTP saliente</p>
+  </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+  <div class="col-lg-8">
+    <!-- Main SMTP Configuration Form -->
+    <div class="glass-card p-4 mb-4">
+      <h5 class="mb-3 text-info"><i class="bi bi-envelope-at-fill me-2"></i>Servidor de Correo Saliente (SMTP)</h5>
+      <form method="POST" action="{{ url_for('settings.index') }}">
+        <div class="row g-3">
+          <div class="col-12">
+            <div class="form-check form-switch p-3 glass-card bg-dark bg-opacity-50 border-secondary border-opacity-25 d-flex align-items-center justify-content-between">
+              <div>
+                <label class="form-check-label fw-bold text-white mb-0" for="notifications_enabled">
+                  Activar Notificaciones Globales por Correo
+                </label>
+                <div class="small text-muted">Envía alertas automáticas por apertura/cierre de tickets y vencimiento de licencias.</div>
+              </div>
+              <input class="form-check-input ms-3" type="checkbox" id="notifications_enabled" name="notifications_enabled" value="1" {% if settings.notifications_enabled %}checked{% endif %}>
+            </div>
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label">Servidor SMTP *</label>
+            <input type="text" class="form-control" name="mail_server" value="{{ settings.mail_server }}" required placeholder="Ej: smtp.office365.com / smtp.gmail.com">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Puerto SMTP *</label>
+            <input type="number" class="form-control" name="mail_port" value="{{ settings.mail_port }}" required placeholder="587 / 465">
+          </div>
+
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="mail_use_tls" name="mail_use_tls" value="1" {% if settings.mail_use_tls %}checked{% endif %}>
+              <label class="form-check-label small text-muted" for="mail_use_tls">
+                Usar encriptación segura TLS / STARTTLS (Recomendado para puerto 587)
+              </label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Usuario / Correo Autenticación SMTP</label>
+            <input type="text" class="form-control" name="mail_username" value="{{ settings.mail_username or '' }}" placeholder="soporte@legoitlook.com">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Contraseña / App Token</label>
+            <input type="password" class="form-control" name="mail_password" value="" placeholder="{% if settings.mail_password %}•••••••• (Sin cambios){% else %}Ingrese contraseña{% endif %}">
+            <small class="text-muted">Deje en blanco si no desea modificar la contraseña existente.</small>
+          </div>
+
+          <div class="col-12"><hr class="border-secondary opacity-25 my-2"></div>
+          <h6 class="text-info fw-bold mb-2"><i class="bi bi-person-badge me-1"></i> Remitente del Correo</h6>
+
+          <div class="col-md-6">
+            <label class="form-label">Nombre del Remitente *</label>
+            <input type="text" class="form-control" name="mail_sender_name" value="{{ settings.mail_sender_name }}" required placeholder="Ej: LEGO TICS SAS Soporte">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Correo Remitente *</label>
+            <input type="email" class="form-control" name="mail_sender_email" value="{{ settings.mail_sender_email }}" required placeholder="soporte@legoitlook.com">
+          </div>
+
+          <div class="col-12 text-end mt-4">
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bi-floppy-fill me-1"></i> Guardar Parámetros
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Test Email Form -->
+    <div class="glass-card p-4">
+      <h5 class="mb-2 text-warning"><i class="bi bi-send-check-fill me-2"></i>Probar Conexión y Envío SMTP</h5>
+      <p class="text-muted small mb-3">Envíe un mensaje de prueba en tiempo real para verificar que los parámetros ingresados funcionan correctamente.</p>
+
+      <form method="POST" action="{{ url_for('settings.test_email') }}" class="row g-3 align-items-center">
+        <div class="col-md-8">
+          <input type="email" class="form-control" name="test_recipient" value="{{ current_user.email }}" placeholder="Correo de destino para la prueba">
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-outline-warning w-100">
+            <i class="bi bi-send me-1"></i> Enviar Prueba
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

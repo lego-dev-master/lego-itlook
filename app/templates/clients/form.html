@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{% if client %}Editar Cliente{% else %}Nuevo Cliente{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{{ url_for('clients.index') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left"></i> Volver a Lista de Clientes
+  </a>
+  <h2 class="mt-2 mb-1">
+    <i class="bi bi-building-add text-info me-2"></i>
+    {% if client %}Editar Cliente: {{ client.company_name }}{% else %}Registrar Nuevo Cliente{% endif %}
+  </h2>
+  <p class="text-muted mb-0">Información corporativa, contactos y datos de facturación/identificación</p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <form method="POST" action="{% if client %}{{ url_for('clients.edit', client_id=client.id) }}{% else %}{{ url_for('clients.create') }}{% endif %}">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Razón Social / Nombre Empresa *</label>
+            <input type="text" class="form-control" name="company_name" value="{{ client.company_name if client else '' }}" required placeholder="Ej: Tech Solutions S.A.S.">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">NIT / Identificación Tributaria *</label>
+            <input type="text" class="form-control" name="tax_id" value="{{ client.tax_id if client else '' }}" required placeholder="Ej: 900.123.456-7">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Nombre de Contacto Principal *</label>
+            <input type="text" class="form-control" name="contact_name" value="{{ client.contact_name if client else '' }}" required placeholder="Ej: María Fernanda Gómez">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Correo Electrónico de Contacto *</label>
+            <input type="email" class="form-control" name="contact_email" value="{{ client.contact_email if client else '' }}" required placeholder="contacto@empresa.com">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Teléfono de Contacto *</label>
+            <input type="text" class="form-control" name="contact_phone" value="{{ client.contact_phone if client else '' }}" required placeholder="Ej: +57 300 1234567">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Dirección Principal</label>
+            <input type="text" class="form-control" name="address" value="{{ client.address if client else '' }}" placeholder="Ej: Calle 100 #15-20, Bogotá">
+          </div>
+
+          {% if not client %}
+          <div class="col-12 border-top border-secondary border-opacity-25 pt-3">
+            <label class="form-label">Nombre de la Sede Principal</label>
+            <input type="text" class="form-control" name="main_location_name" value="Sede Principal" placeholder="Ej: Oficina Central / Sede Principal">
+            <small class="text-muted">Se creará automáticamente esta sede inicial vinculada al cliente.</small>
+          </div>
+          {% endif %}
+
+          <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+            <a href="{{ url_for('clients.index') }}" class="btn btn-secondary-custom">Cancelar</a>
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bi-check-circle me-1"></i> Guardar Cliente
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

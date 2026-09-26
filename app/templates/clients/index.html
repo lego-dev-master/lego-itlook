@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Clientes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-building text-info me-2"></i>Gestión de Clientes</h2>
+    <p class="text-muted mb-0">Empresas clientes, contactos principales y sedes asociadas</p>
+  </div>
+  <a href="{{ url_for('clients.create') }}" class="btn btn-primary-custom">
+    <i class="bi bi-plus-circle me-1"></i> Registrar Cliente
+  </a>
+</div>
+
+<!-- Filters & Search -->
+<div class="glass-card p-3 mb-4">
+  <form method="GET" action="{{ url_for('clients.index') }}" class="row g-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Buscar por Razón Social, NIT o Contacto...">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select class="form-select" name="status" onchange="this.form.submit()">
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Mostrar Clientes Activos</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Mostrar Clientes Deshabilitados</option>
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Todos los Clientes</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-secondary-custom w-100">Filtrar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Clients List -->
+<div class="row g-4">
+  {% for c in clients %}
+  <div class="col-md-6 col-lg-4">
+    <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
+      <div>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="fw-bold text-white mb-0">{{ c.company_name }}</h5>
+          <span class="badge {% if c.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+            {% if c.is_active %}Activo{% else %}Inactivo{% endif %}
+          </span>
+        </div>
+        <div class="text-info small mb-3"><i class="bi bi-card-heading me-1"></i>NIT: {{ c.tax_id }}</div>
+
+        <div class="small text-muted mb-2"><i class="bi bi-person me-2"></i><strong>Contacto:</strong> {{ c.contact_name }}</div>
+        <div class="small text-muted mb-2"><i class="bi bi-envelope me-2"></i>{{ c.contact_email }}</div>
+        <div class="small text-muted mb-3"><i class="bi bi-telephone me-2"></i>{{ c.contact_phone }}</div>
+
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <span class="badge bg-dark border border-secondary text-muted"><i class="bi bi-geo-alt me-1"></i>{{ c.locations|length }} Sedes</span>
+          <span class="badge bg-dark border border-secondary text-muted"><i class="bi bi-pc-display me-1"></i>{{ c.assets|length }} Equipos</span>
+          <span class="badge bg-dark border border-secondary text-muted"><i class="bi bi-microsoft me-1"></i>{{ c.licenses|length }} Licencias</span>
+        </div>
+      </div>
+
+      <div class="pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('clients.detail', client_id=c.id) }}" class="btn btn-sm btn-outline-info">
+          Ver Ficha Completa <i class="bi bi-arrow-right"></i>
+        </a>
+        <a href="{{ url_for('clients.edit', client_id=c.id) }}" class="btn btn-sm btn-secondary-custom" title="Editar">
+          <i class="bi bi-pencil"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="glass-card p-5 text-center text-muted">
+      <i class="bi bi-building-exclamation fs-1 d-block mb-3 text-info"></i>
+      <h5>No se encontraron clientes registrados</h5>
+      <p>Intente cambiando los filtros de búsqueda o registre un nuevo cliente.</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

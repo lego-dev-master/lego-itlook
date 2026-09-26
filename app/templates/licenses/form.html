@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{% if license %}Editar Licencia Microsoft{% else %}Registrar Licencia Microsoft{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{{ url_for('licenses.index') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left"></i> Volver a Inventario de Licencias
+  </a>
+  <h2 class="mt-2 mb-1">
+    <i class="bi bi-microsoft text-info me-2"></i>
+    {% if license %}Editar Licencia: {{ license.subscription_type }}{% else %}Registrar Licencia Microsoft{% endif %}
+  </h2>
+  <p class="text-muted mb-0">Gestión de suscripciones, cantidades y control proactivo de fechas de vencimiento</p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <form method="POST" action="{% if license %}{{ url_for('licenses.edit', license_id=license.id) }}{% else %}{{ url_for('licenses.create') }}{% endif %}">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Cliente *</label>
+            <select class="form-select" name="client_id" required>
+              <option value="">-- Seleccionar Cliente --</option>
+              {% for c in clients %}
+              <option value="{{ c.id }}" {% if license and license.client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Tipo de Suscripción Microsoft *</label>
+            <input type="text" class="form-control" name="subscription_type" value="{{ license.subscription_type if license else '' }}" required placeholder="Ej: Microsoft 365 Business Premium, Azure Plan, Windows Server 2022">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Cantidad Contratada *</label>
+            <input type="number" min="1" class="form-control" name="quantity" value="{{ license.quantity if license else 1 }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Licencias Asignadas a Usuarios</label>
+            <input type="number" min="0" class="form-control" name="assigned_users_count" value="{{ license.assigned_users_count if license else 0 }}">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Fecha de Adquisición *</label>
+            <input type="date" class="form-control" name="acquisition_date" value="{{ license.acquisition_date if license else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Fecha de Vencimiento *</label>
+            <input type="date" class="form-control" name="expiration_date" value="{{ license.expiration_date if license else '' }}" required>
+            <small class="text-muted">El sistema notificará automáticamente a los 30, 15 y 5 días antes.</small>
+          </div>
+
+          <div class="col-12"><hr class="border-secondary opacity-25 my-2"></div>
+          <h6 class="text-info fw-bold mb-2"><i class="bi bi-key me-1"></i> Credenciales y Datos de Instalación / Activación (RF-07)</h6>
+
+          <div class="col-md-6">
+            <label class="form-label">Usuario de Instalación</label>
+            <input type="text" class="form-control" name="installation_user" value="{{ license.installation_user if license else '' }}" placeholder="Ej: admin@tenant.onmicrosoft.com">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Clave / Contraseña</label>
+            <input type="text" class="form-control" name="installation_password" value="{{ license.installation_password if license else '' }}" placeholder="Ej: P@ssw0rd2026!">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Código de Activación / Serial</label>
+            <input type="text" class="form-control" name="activation_code" value="{{ license.activation_code if license else '' }}" placeholder="Ej: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Link de Descarga</label>
+            <input type="url" class="form-control" name="download_link" value="{{ license.download_link if license else '' }}" placeholder="Ej: https://setup.office.com/">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Nombres de Usuarios Asignados (Lista)</label>
+            <input type="text" class="form-control" name="assigned_user_names" value="{{ license.assigned_user_names if license else '' }}" placeholder="Ej: Juan Pérez, María Gómez, Carlos Mendoza">
+            <small class="text-muted">Escriba la lista de usuarios finales que utilizan estas licencias.</small>
+          </div>
+
+          <div class="col-12 border-top border-secondary border-opacity-25 pt-2">
+            <label class="form-label">Notas o Tenant ID</label>
+            <textarea class="form-control" name="notes" rows="2" placeholder="Detalles de facturación Microsoft, Tenant ID, portal de administración o distribuidor...">{{ license.notes if license else '' }}</textarea>
+          </div>
+
+
+          <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+            <a href="{{ url_for('licenses.index') }}" class="btn btn-secondary-custom">Cancelar</a>
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bi-check-circle me-1"></i> Guardar Licencia
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

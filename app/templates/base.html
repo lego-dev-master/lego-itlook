@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Lego ITlook{% endblock %} - Gestión de Servicios TI</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% if current_user.is_authenticated %}
+<div class="app-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <i class="bi bi-cpu-fill text-info"></i>
+      <span>Lego ITlook</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard.index') }}" class="nav-link-custom {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+      </a>
+      <a href="{{ url_for('clients.index') }}" class="nav-link-custom {% if 'clients' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-building"></i> Clientes
+      </a>
+      <a href="{{ url_for('assets.index') }}" class="nav-link-custom {% if 'assets' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-pc-display"></i> Hojas de Vida
+      </a>
+      <a href="{{ url_for('licenses.index') }}" class="nav-link-custom {% if 'licenses' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-microsoft"></i> Licenciamiento M365
+      </a>
+      <a href="{{ url_for('tickets.index') }}" class="nav-link-custom {% if 'tickets' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-ticket-perforated-fill"></i> Tickets de Servicio
+      </a>
+      {% if current_user.is_admin %}
+      <a href="{{ url_for('auth.technicians') }}" class="nav-link-custom {% if request.endpoint == 'auth.technicians' %}active{% endif %}">
+        <i class="bi bi-people-fill"></i> Equipo Técnico
+      </a>
+      <a href="{{ url_for('settings.index') }}" class="nav-link-custom {% if 'settings' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-gear-fill"></i> Configuración
+      </a>
+      {% endif %}
+
+    </nav>
+    <div class="p-3 border-top border-secondary border-opacity-25">
+      <div class="d-flex align-items-center justify-content-between text-muted fs-7">
+        <small><i class="bi bi-shield-lock"></i> {{ current_user.role|capitalize }}</small>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger border-0" title="Cerrar Sesión">
+          <i class="bi bi-box-arrow-right fs-6"></i>
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="btn btn-dark d-lg-none me-2" id="sidebarToggle">
+        <i class="bi bi-list fs-5"></i>
+      </button>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-dark border border-secondary text-light">
+          <i class="bi bi-clock me-1"></i> LEGO TICS SAS
+        </span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="text-end">
+          <div class="fw-bold fs-7">{{ current_user.name }}</div>
+          <small class="text-muted fs-8">{{ current_user.email }}</small>
+        </div>
+        <div class="avatar bg-info text-dark fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width:38px; height:38px;">
+          {{ current_user.name[0]|upper }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Body -->
+    <main class="content-body">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show glass-card border-0 mb-4" role="alert">
+              <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

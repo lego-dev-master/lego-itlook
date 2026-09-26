@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Equipo Técnico y Roles{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-people-fill text-info me-2"></i>Gestión de Equipo Técnico</h2>
+    <p class="text-muted mb-0">Control de usuarios con acceso a la plataforma (RBAC)</p>
+  </div>
+  <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#newTechModal">
+    <i class="bi bi-person-plus-fill me-1"></i> Nuevo Usuario Técnico
+  </button>
+</div>
+
+<div class="row g-4">
+  {% for tech in technicians %}
+  <div class="col-md-6 col-lg-4">
+    <div class="glass-card p-3 d-flex align-items-center gap-3">
+      <div class="avatar bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4" style="width: 54px; height: 54px;">
+        {{ tech.name[0]|upper }}
+      </div>
+      <div class="flex-grow-1">
+        <h5 class="mb-1">{{ tech.name }}</h5>
+        <div class="text-muted small mb-1"><i class="bi bi-envelope me-1"></i>{{ tech.email }}</div>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="badge {% if tech.role == 'admin' %}bg-primary{% else %}bg-secondary{% endif %}">
+            {{ tech.role|capitalize }}
+          </span>
+          <span class="badge {% if tech.is_active %}bg-success{% else %}bg-danger{% endif %}">
+            {% if tech.is_active %}Activo{% else %}Inactivo{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Modal Modal New Tech -->
+<div class="modal fade" id="newTechModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title"><i class="bi bi-person-plus text-info me-2"></i> Registrar Usuario Técnico</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('auth.technicians') }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo</label>
+            <input type="text" class="form-control" name="name" required placeholder="Ej: Carlos Mendoza">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" name="email" required placeholder="carlos@legoitlook.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-control" name="password" required placeholder="••••••••">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rol del Sistema</label>
+            <select class="form-select" name="role" required>
+              <option value="tech">Técnico de Soporte</option>
+              <option value="admin">Administrador del Sistema</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary-custom">Guardar Usuario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

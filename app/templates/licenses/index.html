@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Licenciamiento Microsoft 365 / Azure{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-microsoft text-info me-2"></i>Licenciamiento Microsoft</h2>
+    <p class="text-muted mb-0">Inventario de suscripciones, control de caducidad y alertas proactivas (RF-05, RF-06)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('licenses.export_excel', client_id=client_id, urgency=urgency_filter) }}" class="btn btn-outline-success">
+      <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar Excel
+    </a>
+    <form method="POST" action="{{ url_for('licenses.trigger_alerts') }}">
+      <button type="submit" class="btn btn-outline-warning">
+        <i class="bi bi-bell-fill me-1"></i> Verificar Alertas
+      </button>
+    </form>
+    <a href="{{ url_for('licenses.create') }}" class="btn btn-primary-custom">
+      <i class="bi bi-plus-circle me-1"></i> Registrar Licencia
+    </a>
+  </div>
+</div>
+
+<!-- Status Summary Badges -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2 col-6">
+    <a href="{{ url_for('licenses.index', urgency='expired') }}" class="text-decoration-none">
+      <div class="glass-card p-3 text-center border-dark bg-dark">
+        <div class="fs-4 fw-bold text-white">{{ status_summary['expired'] }}</div>
+        <div class="small text-muted">Vencidas</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{{ url_for('licenses.index', urgency='critical') }}" class="text-decoration-none">
+      <div class="glass-card p-3 text-center border-danger bg-danger bg-opacity-10">
+        <div class="fs-4 fw-bold text-danger">{{ status_summary['critical'] }}</div>
+        <div class="small text-danger">Críticas (&le; 5d)</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{{ url_for('licenses.index', urgency='warning') }}" class="text-decoration-none">
+      <div class="glass-card p-3 text-center border-warning bg-warning bg-opacity-10">
+        <div class="fs-4 fw-bold text-warning">{{ status_summary['warning'] }}</div>
+        <div class="small text-warning">Alerta (&le; 15d)</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{{ url_for('licenses.index', urgency='notice') }}" class="text-decoration-none">
+      <div class="glass-card p-3 text-center border-info bg-info bg-opacity-10">
+        <div class="fs-4 fw-bold text-info">{{ status_summary['notice'] }}</div>
+        <div class="small text-info">Aviso (&le; 30d)</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{{ url_for('licenses.index', urgency='active') }}" class="text-decoration-none">
+      <div class="glass-card p-3 text-center border-success bg-success bg-opacity-10">
+        <div class="fs-4 fw-bold text-success">{{ status_summary['active'] }}</div>
+        <div class="small text-success">Activas (> 30d)</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-2 col-6">
+    <a href="{{ url_for('licenses.index') }}" class="text-decoration-none">
+      <div class="glass-card p-3 text-center">
+        <div class="fs-4 fw-bold text-white">{{ status_summary.values()|sum }}</div>
+        <div class="small text-muted">Todas</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="glass-card p-3 mb-4">
+  <form method="GET" action="{{ url_for('licenses.index') }}" class="row g-3">
+    <div class="col-md-6">
+      <select class="form-select" name="client_id" onchange="this.form.submit()">
+        <option value="">-- Filtrar por Cliente --</option>
+        {% for c in clients %}
+        <option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <select class="form-select" name="urgency" onchange="this.form.submit()">
+        <option value="">-- Estado de Urgencia --</option>
+        <option value="critical" {% if urgency_filter == 'critical' %}selected{% endif %}>Crítica (&le; 5 días)</option>
+        <option value="warning" {% if urgency_filter == 'warning' %}selected{% endif %}>Alerta (&le; 15 días)</option>
+        <option value="notice" {% if urgency_filter == 'notice' %}selected{% endif %}>Aviso (&le; 30 días)</option>
+        <option value="expired" {% if urgency_filter == 'expired' %}selected{% endif %}>Vencidas</option>
+        <option value="active" {% if urgency_filter == 'active' %}selected{% endif %}>Vigentes (> 30 días)</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-secondary-custom w-100">Filtrar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Licenses Table -->
+<div class="glass-card p-4">
+  <div class="table-responsive">
+    <table class="table table-custom">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>Tipo de Suscripción Microsoft</th>
+          <th>Cantidad</th>
+          <th>Fecha Adquisición</th>
+          <th>Fecha Vencimiento</th>
+          <th>Días Restantes</th>
+          <th>Estado Alerta</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lic in licenses %}
+        <tr>
+          <td class="fw-bold text-white">
+            {{ lic.client.company_name }}
+            {% if lic.assigned_user_names %}
+              <div class="small text-muted mt-1"><i class="bi bi-people me-1"></i><strong>Usuarios:</strong> {{ lic.assigned_user_names }}</div>
+            {% endif %}
+          </td>
+          <td class="text-info fw-bold">
+            {{ lic.subscription_type }}
+            {% if lic.download_link %}
+              <div class="small mt-1"><a href="{{ lic.download_link }}" target="_blank" class="text-info text-decoration-none"><i class="bi bi-download me-1"></i>Descargar</a></div>
+            {% endif %}
+          </td>
+          <td>
+            {{ lic.quantity }} lic. ({{ lic.assigned_users_count or 0 }} asig.)
+            {% if lic.activation_code %}
+              <div class="small text-muted font-monospace mt-1" title="Código de Activación"><i class="bi bi-key me-1"></i>{{ lic.activation_code }}</div>
+            {% endif %}
+          </td>
+          <td class="small text-muted">
+            {{ lic.acquisition_date }}
+            {% if lic.installation_user %}
+              <div class="small text-light mt-1" title="Usuario / Clave de Instalación"><i class="bi bi-person-badge me-1"></i>{{ lic.installation_user }}</div>
+            {% endif %}
+          </td>
+          <td class="fw-bold">{{ lic.expiration_date }}</td>
+          <td>
+            {% if lic.days_until_expiration < 0 %}
+              <span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> Hace {{ lic.days_until_expiration|abs }} días</span>
+            {% elif lic.days_until_expiration <= 5 %}
+              <span class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> {{ lic.days_until_expiration }} días</span>
+            {% elif lic.days_until_expiration <= 15 %}
+              <span class="text-warning fw-bold"><i class="bi bi-exclamation-circle"></i> {{ lic.days_until_expiration }} días</span>
+            {% else %}
+              <span class="text-success"><i class="bi bi-clock"></i> {{ lic.days_until_expiration }} días</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {{ lic.status_badge_class }}">{{ lic.alert_status|upper }}</span>
+          </td>
+          <td>
+            <a href="{{ url_for('licenses.edit', license_id=lic.id) }}" class="btn btn-sm btn-secondary-custom" title="Editar Licencia">
+              <i class="bi bi-pencil"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-microsoft fs-1 d-block mb-3 text-info"></i>
+            No se encontraron licencias registradas.
+          </td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

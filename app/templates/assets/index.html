@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Hojas de Vida de Equipos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-pc-display text-info me-2"></i>Hojas de Vida de Equipos</h2>
+    <p class="text-muted mb-0">Inventario técnico de hardware, mantenimientos preventivos y correctivos</p>
+  </div>
+  <a href="{{ url_for('assets.create') }}" class="btn btn-primary-custom">
+    <i class="bi bi-plus-circle me-1"></i> Registrar Equipo
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="glass-card p-3 mb-4">
+  <form method="GET" action="{{ url_for('assets.index') }}" class="row g-3">
+    <div class="col-md-4">
+      <div class="input-group">
+        <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-search"></i></span>
+        <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Código interno, serial, marca o modelo...">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="client_id" onchange="this.form.submit()">
+        <option value="">-- Todos los Clientes --</option>
+        {% for c in clients %}
+        <option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="device_type" onchange="this.form.submit()">
+        <option value="">-- Tipo de Dispositivo --</option>
+        {% for dt in device_types %}
+        <option value="{{ dt }}" {% if device_type == dt %}selected{% endif %}>{{ dt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-secondary-custom w-100">Filtrar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Assets Table -->
+<div class="glass-card p-4">
+  <div class="table-responsive">
+    <table class="table table-custom">
+      <thead>
+        <tr>
+          <th>Código Interno</th>
+          <th>Cliente / Sede</th>
+          <th>Tipo</th>
+          <th>Marca y Modelo</th>
+          <th>Especificaciones (CPU/RAM/Disco)</th>
+          <th>Estado</th>
+          <th>Bitácoras</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assets %}
+        <tr>
+          <td class="fw-bold text-info">
+            <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="text-info text-decoration-none">
+              {{ a.internal_code }}
+            </a>
+          </td>
+          <td>
+            <div class="fw-bold text-white">{{ a.client.company_name }}</div>
+            <small class="text-muted">{{ a.location.name if a.location else 'Sede Principal' }}</small>
+          </td>
+          <td><span class="badge bg-dark border border-secondary text-light">{{ a.device_type }}</span></td>
+          <td>{{ a.brand }} {{ a.model }}</td>
+          <td class="small text-muted">
+            {{ a.cpu or 'N/A' }} | {{ a.ram or 'N/A' }} | {{ a.storage or 'N/A' }}
+          </td>
+          <td>
+            <span class="badge {% if a.status == 'Operativo' %}bg-success{% elif a.status == 'En Mantenimiento' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+              {{ a.status }}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-info text-dark fw-bold">{{ a.maintenance_logs|length }} mant.</span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn btn-outline-info" title="Ver Hoja de Vida">
+                <i class="bi bi-file-earmark-text"></i>
+              </a>
+              <a href="{{ url_for('assets.edit', asset_id=a.id) }}" class="btn btn-secondary-custom" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-pc-display-horizontal fs-1 d-block mb-3 text-info"></i>
+            No se encontraron equipos registrados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Principal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-speedometer2 text-info me-2"></i>Panel de Control Operativo</h2>
+    <p class="text-muted mb-0">Resumen ejecutivo de infraestructura y atención de tickets TI</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('tickets.create') }}" class="btn btn-primary-custom">
+      <i class="bi bi-plus-circle me-1"></i> Nuevo Ticket
+    </a>
+  </div>
+</div>
+
+<!-- License Expiration Proactive Alert Banner (RF-06) -->
+{% if alerts %}
+<div class="alert glass-card border-warning text-white p-3 mb-4 d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center gap-3">
+    <div class="stat-icon warning m-0"><i class="bi bi-exclamation-triangle-fill fs-3"></i></div>
+    <div>
+      <h6 class="fw-bold mb-1 text-warning"><i class="bi bi-bell-fill"></i> Atencion: Licencias Microsoft Próximas a Vencer</h6>
+      <p class="mb-0 small text-light opacity-75">
+        Se han detectado {{ alerts|length }} suscripciones de licencias que vencerán en menos de 30 días.
+      </p>
+    </div>
+  </div>
+  <a href="{{ url_for('licenses.index', urgency='notice') }}" class="btn btn-sm btn-warning text-dark fw-bold">
+    Ver Licencias <i class="bi bi-arrow-right"></i>
+  </a>
+</div>
+{% endif %}
+
+<!-- Key Metrics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="glass-card card-stat">
+      <div class="stat-icon primary"><i class="bi bi-building"></i></div>
+      <div class="stat-value">{{ total_clients }}</div>
+      <div class="stat-label">Clientes Activos</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="glass-card card-stat">
+      <div class="stat-icon success"><i class="bi bi-pc-display"></i></div>
+      <div class="stat-value">{{ total_assets }}</div>
+      <div class="stat-label">Equipos en Inventario</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="glass-card card-stat">
+      <div class="stat-icon warning"><i class="bi bi-microsoft"></i></div>
+      <div class="stat-value text-warning">{{ expiring_30_days }}</div>
+      <div class="stat-label">Licencias por Vencer (&le; 30d)</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="glass-card card-stat">
+      <div class="stat-icon danger"><i class="bi bi-ticket-detailed-fill"></i></div>
+      <div class="stat-value text-danger">{{ open_tickets }}</div>
+      <div class="stat-label">Tickets Abiertos / Proceso</div>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Stats & Activity -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2 text-info"></i>Tickets Recientes</h5>
+        <a href="{{ url_for('tickets.index') }}" class="small text-info text-decoration-none">Ver Todos &rarr;</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Cliente</th>
+              <th>Asunto</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th>SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in recent_tickets %}
+            <tr>
+              <td>
+                <a href="{{ url_for('tickets.detail', ticket_id=t.id) }}" class="fw-bold text-info text-decoration-none">
+                  {{ t.ticket_code }}
+                </a>
+              </td>
+              <td>{{ t.client.company_name }}</td>
+              <td class="text-truncate" style="max-width: 180px;">{{ t.title }}</td>
+              <td><span class="badge {{ t.priority_badge_class }}">{{ t.priority }}</span></td>
+              <td><span class="badge {{ t.status_badge_class }}">{{ t.status }}</span></td>
+              <td>
+                {% if t.is_sla_breached %}
+                  <span class="badge bg-danger" title="SLA Incumplido"><i class="bi bi-alarm-fill"></i> Vencido</span>
+                {% else %}
+                  <span class="badge bg-success" title="En Tiempo"><i class="bi bi-check-circle"></i> OK</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay tickets registrados actualmente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Ticket Priorities Breakdown -->
+    <div class="glass-card p-4 mb-4">
+      <h5 class="mb-3"><i class="bi bi-pie-chart-fill me-2 text-info"></i>Prioridad de Tickets</h5>
+      <div class="d-flex flex-column gap-3">
+        <div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-danger fw-bold"><i class="bi bi-exclamation-octagon-fill me-1"></i> Crítica</span>
+            <span>{{ priority_counts['Crítica'] }} tickets</span>
+          </div>
+          <div class="progress bg-dark" style="height: 8px;">
+            <div class="progress-bar bg-danger" style="width: {{ [priority_counts['Crítica'] * 25, 100]|min }}%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> Alta</span>
+            <span>{{ priority_counts['Alta'] }} tickets</span>
+          </div>
+          <div class="progress bg-dark" style="height: 8px;">
+            <div class="progress-bar bg-warning" style="width: {{ [priority_counts['Alta'] * 25, 100]|min }}%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-info fw-bold"><i class="bi bi-dash-circle-fill me-1"></i> Media</span>
+            <span>{{ priority_counts['Media'] }} tickets</span>
+          </div>
+          <div class="progress bg-dark" style="height: 8px;">
+            <div class="progress-bar bg-info" style="width: {{ [priority_counts['Media'] * 25, 100]|min }}%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-secondary fw-bold"><i class="bi bi-info-circle-fill me-1"></i> Baja</span>
+            <span>{{ priority_counts['Baja'] }} tickets</span>
+          </div>
+          <div class="progress bg-dark" style="height: 8px;">
+            <div class="progress-bar bg-secondary" style="width: {{ [priority_counts['Baja'] * 25, 100]|min }}%"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="glass-card p-4">
+      <h5 class="mb-3"><i class="bi bi-shield-check me-2 text-info"></i>Alertas de SLA & Licencias</h5>
+      <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-2">
+        <span class="small"><i class="bi bi-alarm text-danger me-2"></i>Tickets con SLA Vencido:</span>
+        <span class="fw-bold text-danger">{{ sla_breached_count }}</span>
+      </div>
+      <div class="d-flex align-items-center justify-content-between border-bottom border-secondary border-opacity-25 pb-2 mb-2">
+        <span class="small"><i class="bi bi-exclamation-circle text-danger me-2"></i>Licencias Vencidas:</span>
+        <span class="fw-bold text-danger">{{ expired_licenses }}</span>
+      </div>
+      <div class="d-flex align-items-center justify-content-between">
+        <span class="small"><i class="bi bi-clock-history text-warning me-2"></i>Licencias Críticas (&le; 5 días):</span>
+        <span class="fw-bold text-warning">{{ expiring_critical }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket {{ ticket.ticket_code }}{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <a href="{{ url_for('tickets.index') }}" class="text-muted text-decoration-none small">
+      <i class="bi bi-arrow-left"></i> Volver a Lista de Tickets
+    </a>
+    <h2 class="mt-2 mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-ticket-perforated text-info"></i> Ticket {{ ticket.ticket_code }}
+      <span class="badge {{ ticket.status_badge_class }} fs-6 fw-normal">{{ ticket.status }}</span>
+      <span class="badge {{ ticket.priority_badge_class }} fs-6 fw-normal">{{ ticket.priority }}</span>
+    </h2>
+    <p class="text-muted mb-0">Creado el {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }} por {{ ticket.client.company_name }}</p>
+  </div>
+
+  <div>
+    {% if ticket.is_sla_breached %}
+      <div class="badge bg-danger p-2 fs-6"><i class="bi bi-alarm-fill me-1"></i> SLA Vencido (Límite: {{ ticket.sla_due_at.strftime('%H:%M %d/%m') }})</div>
+    {% else %}
+      <div class="badge bg-success p-2 fs-6"><i class="bi bi-clock-history me-1"></i> SLA En Tiempo (Límite: {{ ticket.sla_due_at.strftime('%H:%M %d/%m') }})</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left Side: Main Info & Interventions History -->
+  <div class="col-lg-8">
+    <!-- Ticket Description -->
+    <div class="glass-card p-4 mb-4">
+      <h5 class="fw-bold text-white mb-2">{{ ticket.title }}</h5>
+      <p class="text-light mb-0" style="white-space: pre-line;">{{ ticket.description }}</p>
+    </div>
+
+    <!-- Add Intervention Form -->
+    <div class="glass-card p-4 mb-4">
+      <h5 class="mb-3 text-info"><i class="bi bi-chat-left-text me-2"></i>Registrar Intervención / Actualización</h5>
+      <form method="POST" action="{{ url_for('tickets.add_intervention', ticket_id=ticket.id) }}" enctype="multipart/form-data">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Cambiar Estado</label>
+            <select class="form-select" name="status">
+              <option value="Abierto" {% if ticket.status == 'Abierto' %}selected{% endif %}>Abierto</option>
+              <option value="En Proceso" {% if ticket.status == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+              <option value="Espera Cliente" {% if ticket.status == 'Espera Cliente' %}selected{% endif %}>Espera Cliente</option>
+              <option value="Resuelto" {% if ticket.status == 'Resuelto' %}selected{% endif %}>Resuelto</option>
+              <option value="Cerrado" {% if ticket.status == 'Cerrado' %}selected{% endif %}>Cerrado</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Reasignar Técnico</label>
+            <select class="form-select" name="reassign_to_id">
+              {% for tech in technicians %}
+              <option value="{{ tech.id }}" {% if ticket.assigned_to_id == tech.id %}selected{% endif %}>{{ tech.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Tiempo Invertido (Horas)</label>
+            <input type="number" step="0.5" class="form-control" name="hours_spent" value="0.5">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Soporte o Evidencia Adjunta</label>
+            <input type="file" class="form-control" name="attachment" accept=".pdf,.png,.jpg,.jpeg,.txt,.zip">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Notas de Diagnóstico o Actividad *</label>
+            <textarea class="form-control" name="notes" rows="3" required placeholder="Escriba las acciones tomadas, diagnósticos o acuerdos con el cliente..."></textarea>
+          </div>
+
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bg-send me-1"></i> Guardar Intervención
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Interventions Timeline -->
+    <div class="glass-card p-4">
+      <h5 class="mb-3 text-info"><i class="bi bi-clock-history me-2"></i>Historial de Intervenciones ({{ ticket.interventions|length }})</h5>
+
+      <div class="timeline">
+        {% for it in ticket.interventions|sort(attribute='created_at', reverse=True) %}
+        <div class="p-3 mb-3 glass-card bg-dark bg-opacity-50 border-secondary border-opacity-25">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <strong class="text-info"><i class="bi bi-person-fill me-1"></i>{{ it.technician.name }}</strong>
+              <small class="text-muted ms-2">{{ it.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+            <div class="d-flex gap-2">
+              <span class="badge bg-dark border border-secondary text-muted"><i class="bi bi-stopwatch me-1"></i>{{ it.hours_spent }}h</span>
+              {% if it.previous_status != it.new_status %}
+                <span class="badge bg-warning text-dark">{{ it.previous_status }} &rarr; {{ it.new_status }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <p class="text-light mb-2" style="white-space: pre-line;">{{ it.notes }}</p>
+
+          {% if it.attachment_filename %}
+          <div class="pt-2 border-top border-secondary border-opacity-10">
+            <a href="{{ url_for('static', filename='uploads/' + it.attachment_filename) }}" target="_blank" class="text-info text-decoration-none small">
+              <i class="bi bi-paperclip me-1"></i> Descargar Adjunto
+            </a>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+          No hay intervenciones registradas en este ticket aún.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Ticket Sidebar Details -->
+  <div class="col-lg-4">
+    <div class="glass-card p-4 mb-4">
+      <h5 class="mb-3 text-info"><i class="bi bi-building me-2"></i>Cliente & Sede</h5>
+      <div class="mb-2"><strong>Cliente:</strong> <a href="{{ url_for('clients.detail', client_id=ticket.client.id) }}" class="text-info">{{ ticket.client.company_name }}</a></div>
+      <div class="mb-2"><strong>NIT:</strong> {{ ticket.client.tax_id }}</div>
+      <div class="mb-2"><strong>Contacto Solicitante:</strong> 
+        {% if ticket.contact %}
+          <span class="text-white fw-bold">{{ ticket.contact.name }}</span> (<a href="mailto:{{ ticket.contact.email }}" class="text-info">{{ ticket.contact.email }}</a>)
+        {% else %}
+          {{ ticket.client.contact_name }} ({{ ticket.client.contact_phone }})
+        {% endif %}
+      </div>
+      <div class="mb-0"><strong>Sede:</strong> {{ ticket.location.name if ticket.location else 'Sede Principal' }}</div>
+
+    </div>
+
+    {% if ticket.asset %}
+    <div class="glass-card p-4 mb-4">
+      <h5 class="mb-3 text-info"><i class="bi bi-pc-display me-2"></i>Equipo Asociado</h5>
+      <div class="mb-2"><strong>Código Interno:</strong> <a href="{{ url_for('assets.detail', asset_id=ticket.asset.id) }}" class="text-info">{{ ticket.asset.internal_code }}</a></div>
+      <div class="mb-2"><strong>Equipo:</strong> {{ ticket.asset.brand }} {{ ticket.asset.model }}</div>
+      <div class="mb-0"><strong>Tipo:</strong> {{ ticket.asset.device_type }}</div>
+    </div>
+    {% endif %}
+
+    <div class="glass-card p-4">
+      <h5 class="mb-3 text-info"><i class="bi bi-sliders me-2"></i>Parámetros del Ticket</h5>
+      <div class="mb-2"><strong>Tipo de Servicio:</strong> {{ ticket.service_type }}</div>
+      <div class="mb-2"><strong>Prioridad:</strong> <span class="badge {{ ticket.priority_badge_class }}">{{ ticket.priority }}</span></div>
+      <div class="mb-2"><strong>Técnico Asignado:</strong> {{ ticket.assigned_to_user.name if ticket.assigned_to_user else 'Sin Asignar' }}</div>
+      <div class="mb-2"><strong>Límite SLA:</strong> {{ ticket.sla_due_at.strftime('%Y-%m-%d %H:%M') }}</div>
+      {% if ticket.resolved_at %}
+      <div class="mb-0"><strong>Fecha Resuelto:</strong> {{ ticket.resolved_at.strftime('%Y-%m-%d %H:%M') }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

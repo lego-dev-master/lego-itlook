@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=prod
+      - SECRET_KEY=lego-itlook-prod-secret-key-2026
+      - DATABASE_URL=postgresql://itlook_user:itlook_password@db:5432/itlook_db
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=itlook_user
+      - POSTGRES_PASSWORD=itlook_password
+      - POSTGRES_DB=itlook_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  postgres_data:

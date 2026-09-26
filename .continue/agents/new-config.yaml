@@ -1,0 +1,6 @@
+models:
+  - name: DeepSeek Chat
+    provider: deepseek
+    model: deepseek-chat
+    apiBase: https://api.deepseek.com/v1
+    apiKey: "sk-8e264eea8801420c87f9cc217064e019"

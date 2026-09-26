@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Cliente: {{ client.company_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <a href="{{ url_for('clients.index') }}" class="text-muted text-decoration-none small">
+      <i class="bi bi-arrow-left"></i> Volver a Clientes
+    </a>
+    <h2 class="mt-2 mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-building text-info"></i> {{ client.company_name }}
+      <span class="badge {% if client.is_active %}bg-success{% else %}bg-secondary{% endif %} fs-6 fw-normal">
+        {% if client.is_active %}Activo{% else %}Deshabilitado{% endif %}
+      </span>
+    </h2>
+    <p class="text-muted mb-0">NIT: {{ client.tax_id }} | Registrado el {{ client.created_at.strftime('%Y-%m-%d') }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('clients.edit', client_id=client.id) }}" class="btn btn-secondary-custom">
+      <i class="bi bi-pencil me-1"></i> Editar Cliente
+    </a>
+    <form method="POST" action="{{ url_for('clients.toggle_status', client_id=client.id) }}" onsubmit="return confirm('¿Está seguro de cambiar el estado de este cliente?');">
+      <button type="submit" class="btn {% if client.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+        <i class="bi bi-power me-1"></i> {% if client.is_active %}Deshabilitar{% else %}Activar{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Tabs Navigation -->
+<ul class="nav nav-pills mb-4 gap-2" id="clientTabs" role="tablist">
+  <li class="nav-item">
+    <button class="nav-link active bg-dark text-white border border-secondary" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+      <i class="bi bi-info-circle me-1"></i> Información General
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link bg-dark text-white border border-secondary" id="locations-tab" data-bs-toggle="tab" data-bs-target="#locations" type="button">
+      <i class="bi bi-geo-alt me-1"></i> Sedes ({{ client.locations|length }})
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link bg-dark text-white border border-secondary" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts" type="button">
+      <i class="bi bi-person-lines-fill me-1"></i> Contactos ({{ client.contacts|length }})
+    </button>
+  </li>
+
+  <li class="nav-item">
+    <button class="nav-link bg-dark text-white border border-secondary" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button">
+      <i class="bi bi-pc-display me-1"></i> Equipos ({{ client.assets|length }})
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link bg-dark text-white border border-secondary" id="licenses-tab" data-bs-toggle="tab" data-bs-target="#licenses" type="button">
+      <i class="bi bi-microsoft me-1"></i> Licencias ({{ client.licenses|length }})
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link bg-dark text-white border border-secondary" id="tickets-tab" data-bs-toggle="tab" data-bs-target="#tickets" type="button">
+      <i class="bi bi-ticket-perforated me-1"></i> Tickets ({{ client.tickets|length }})
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="clientTabsContent">
+  <!-- Tab 1: Overview -->
+  <div class="tab-pane fade show active" id="overview">
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="glass-card p-4">
+          <h5 class="mb-3 text-info"><i class="bi bi-person-lines-fill me-2"></i>Datos de Contacto</h5>
+          <div class="mb-2"><strong>Contacto Principal:</strong> {{ client.contact_name }}</div>
+          <div class="mb-2"><strong>Correo Electrónico:</strong> <a href="mailto:{{ client.contact_email }}" class="text-info">{{ client.contact_email }}</a></div>
+          <div class="mb-2"><strong>Teléfono Directo:</strong> {{ client.contact_phone }}</div>
+          <div class="mb-0"><strong>Dirección Registrada:</strong> {{ client.address or 'No especificada' }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="glass-card p-4">
+          <h5 class="mb-3 text-info"><i class="bi bi-pie-chart-fill me-2"></i>Resumen Operativo</h5>
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom border-secondary border-opacity-25">
+            <span>Sedes / Ubicaciones Registradas:</span>
+            <span class="fw-bold text-white fs-5">{{ client.locations|length }}</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom border-secondary border-opacity-25">
+            <span>Equipos Registrados en Hoja de Vida:</span>
+            <span class="fw-bold text-white fs-5">{{ client.assets|length }}</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom border-secondary border-opacity-25">
+            <span>Suscripciones Microsoft Activas:</span>
+            <span class="fw-bold text-white fs-5">{{ client.licenses|length }}</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between">
+            <span>Total Tickets Históricos:</span>
+            <span class="fw-bold text-white fs-5">{{ client.tickets|length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Locations -->
+  <div class="tab-pane fade" id="locations">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-info"><i class="bi bi-geo-alt-fill me-2"></i>Sedes del Cliente</h5>
+        <button class="btn btn-sm btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addLocationModal">
+          <i class="bi bi-plus"></i> Agregar Sede
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Nombre Sede</th>
+              <th>Ciudad</th>
+              <th>Dirección</th>
+              <th>Contacto Local</th>
+              <th>Teléfono</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loc in client.locations %}
+            <tr>
+              <td class="fw-bold text-white">{{ loc.name }}</td>
+              <td>{{ loc.city or '-' }}</td>
+              <td>{{ loc.address or '-' }}</td>
+              <td>{{ loc.contact_person or '-' }}</td>
+              <td>{{ loc.contact_phone or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No hay sedes adicionales registradas para este cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Contacts -->
+  <div class="tab-pane fade" id="contacts">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-info"><i class="bi bi-people-fill me-2"></i>Contactos Autorizados del Cliente</h5>
+        <button class="btn btn-sm btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addContactModal">
+          <i class="bi bi-person-plus"></i> Agregar Contacto
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Nombre Completo</th>
+              <th>Correo Electrónico</th>
+              <th>Teléfono</th>
+              <th>Cargo / Dpto</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in client.contacts %}
+            <tr>
+              <td class="fw-bold text-white">{{ c.name }}</td>
+              <td class="text-info"><i class="bi bi-envelope me-1"></i>{{ c.email }}</td>
+              <td>{{ c.phone or '-' }}</td>
+              <td>{{ c.position or '-' }}</td>
+              <td>
+                {% if c.is_primary %}
+                  <span class="badge bg-success">Principal</span>
+                {% else %}
+                  <span class="badge bg-secondary">Secundario</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('clients.delete_contact', client_id=client.id, contact_id=c.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este contacto?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Contacto">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay contactos adicionales registrados para este cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Tab 3: Assets -->
+  <div class="tab-pane fade" id="assets">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-info"><i class="bi bi-pc-display me-2"></i>Hojas de Vida de Equipos</h5>
+        <a href="{{ url_for('assets.create') }}?client_id={{ client.id }}" class="btn btn-sm btn-primary-custom">
+          <i class="bi bi-plus"></i> Registrar Equipo
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Código Interno</th>
+              <th>Tipo</th>
+              <th>Marca & Modelo</th>
+              <th>Sede</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in client.assets %}
+            <tr>
+              <td class="fw-bold text-info">{{ a.internal_code }}</td>
+              <td>{{ a.device_type }}</td>
+              <td>{{ a.brand }} {{ a.model }}</td>
+              <td>{{ a.location.name if a.location else 'Principal' }}</td>
+              <td>
+                <span class="badge {% if a.status == 'Operativo' %}bg-success{% elif a.status == 'En Mantenimiento' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+                  {{ a.status }}
+                </span>
+              </td>
+              <td>
+                <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn btn-sm btn-outline-info">Ver Hoja de Vida</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay equipos registrados para este cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Licenses -->
+  <div class="tab-pane fade" id="licenses">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-info"><i class="bi bi-microsoft me-2"></i>Licenciamiento Microsoft</h5>
+        <a href="{{ url_for('licenses.create') }}" class="btn btn-sm btn-primary-custom">
+          <i class="bi bi-plus"></i> Añadir Licencia
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Suscripción</th>
+              <th>Cantidad</th>
+              <th>Datos de Instalación / Activación</th>
+              <th>Usuarios Asignados</th>
+              <th>Fecha Vencimiento</th>
+              <th>Estado Alerta</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lic in client.licenses %}
+            <tr>
+              <td class="fw-bold text-white">
+                {{ lic.subscription_type }}
+                {% if lic.download_link %}
+                  <div class="small mt-1"><a href="{{ lic.download_link }}" target="_blank" class="text-info text-decoration-none"><i class="bi bi-download me-1"></i>Descargar</a></div>
+                {% endif %}
+              </td>
+              <td>{{ lic.quantity }} lic. ({{ lic.assigned_users_count or 0 }} asig.)</td>
+              <td class="small">
+                {% if lic.installation_user %}
+                  <div class="text-light mb-1"><i class="bi bi-person-badge me-1"></i><strong>Usuario:</strong> {{ lic.installation_user }}</div>
+                {% endif %}
+                {% if lic.activation_code %}
+                  <div class="text-muted font-monospace"><i class="bi bi-key me-1"></i><strong>Código:</strong> {{ lic.activation_code }}</div>
+                {% endif %}
+                {% if not lic.installation_user and not lic.activation_code %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td class="small text-muted">
+                {{ lic.assigned_user_names or '-' }}
+              </td>
+              <td>
+                <div>{{ lic.expiration_date }}</div>
+                <small class="fw-bold {% if lic.days_until_expiration < 0 %}text-danger{% elif lic.days_until_expiration <= 5 %}text-danger{% elif lic.days_until_expiration <= 15 %}text-warning{% else %}text-success{% endif %}">
+                  {{ lic.days_until_expiration }} días
+                </small>
+              </td>
+              <td><span class="badge {{ lic.status_badge_class }}">{{ lic.alert_status|upper }}</span></td>
+              <td>
+                <a href="{{ url_for('licenses.edit', license_id=lic.id) }}" class="btn btn-sm btn-secondary-custom" title="Editar Licencia">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">No hay licencias registradas para este cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: Tickets -->
+  <div class="tab-pane fade" id="tickets">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-info"><i class="bi bi-ticket-perforated me-2"></i>Historial de Tickets</h5>
+        <a href="{{ url_for('tickets.create') }}?client_id={{ client.id }}" class="btn btn-sm btn-primary-custom">
+          <i class="bi bi-plus"></i> Nuevo Ticket
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Asunto</th>
+              <th>Prioridad</th>
+              <th>Técnico</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in client.tickets %}
+            <tr>
+              <td class="fw-bold text-info">{{ t.ticket_code }}</td>
+              <td>{{ t.title }}</td>
+              <td><span class="badge {{ t.priority_badge_class }}">{{ t.priority }}</span></td>
+              <td>{{ t.assigned_to_user.name if t.assigned_to_user else 'Sin Asignar' }}</td>
+              <td><span class="badge {{ t.status_badge_class }}">{{ t.status }}</span></td>
+              <td><a href="{{ url_for('tickets.detail', ticket_id=t.id) }}" class="btn btn-sm btn-outline-info">Detalles</a></td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay tickets registrados para este cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Location -->
+<div class="modal fade" id="addLocationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title"><i class="bi bi-geo-alt text-info me-2"></i> Agregar Sede / Departamento</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('clients.add_location', client_id=client.id) }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre de Sede *</label>
+            <input type="text" class="form-control" name="name" required placeholder="Ej: Sede Norte / Planta 2">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ciudad</label>
+            <input type="text" class="form-control" name="city" placeholder="Ej: Medellín">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" name="address" placeholder="Ej: Cra 43A #1-50">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Persona de Contacto Local</label>
+            <input type="text" class="form-control" name="contact_person" placeholder="Ej: Juan Pérez">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Teléfono Local</label>
+            <input type="text" class="form-control" name="contact_phone" placeholder="Ej: +57 304 9876543">
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary-custom">Guardar Sede</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Contact -->
+<div class="modal fade" id="addContactModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title"><i class="bi bi-person-plus text-info me-2"></i> Agregar Contacto de Cliente</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('clients.add_contact', client_id=client.id) }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo *</label>
+            <input type="text" class="form-control" name="name" required placeholder="Ej: Carlos Restrepo">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico *</label>
+            <input type="email" class="form-control" name="email" required placeholder="crestrepo@empresa.com">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Teléfono / Extensión</label>
+            <input type="text" class="form-control" name="phone" placeholder="Ej: +57 300 1234567 Ext 104">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cargo / Departamento</label>
+            <input type="text" class="form-control" name="position" placeholder="Ej: Director de TI / Jefe de Contabilidad">
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="is_primary" name="is_primary" value="1">
+            <label class="form-check-label small text-muted" for="is_primary">Establecer como contacto principal del cliente</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary-custom">Guardar Contacto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

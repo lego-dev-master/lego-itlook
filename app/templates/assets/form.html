@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{% if asset %}Editar Equipo{% else %}Registrar Equipo en Hoja de Vida{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{{ url_for('assets.index') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left"></i> Volver a Hojas de Vida
+  </a>
+  <h2 class="mt-2 mb-1">
+    <i class="bi bi-pc-display-horizontal text-info me-2"></i>
+    {% if asset %}Editar Equipo: {{ asset.internal_code }}{% else %}Registrar Equipo en Hoja de Vida{% endif %}
+  </h2>
+  <p class="text-muted mb-0">Hardware técnico, especificaciones de componentes y asignación a cliente</p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="glass-card p-4">
+      <form method="POST" action="{% if asset %}{{ url_for('assets.edit', asset_id=asset.id) }}{% else %}{{ url_for('assets.create') }}{% endif %}">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Código Interno / Placa *</label>
+            <input type="text" class="form-control" name="internal_code" value="{{ asset.internal_code if asset else '' }}" required placeholder="Ej: EQ-2026-001">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Número de Serial</label>
+            <input type="text" class="form-control" name="serial_number" value="{{ asset.serial_number if asset else '' }}" placeholder="Ej: SN-987654321">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Tipo de Equipo *</label>
+            <select class="form-select" name="device_type" required>
+              <option value="Servidor" {% if asset and asset.device_type == 'Servidor' %}selected{% endif %}>Servidor</option>
+              <option value="PC Desktop" {% if asset and asset.device_type == 'PC Desktop' %}selected{% endif %}>PC Desktop</option>
+              <option value="Laptop" {% if asset and asset.device_type == 'Laptop' %}selected{% endif %}>Laptop</option>
+              <option value="Switch" {% if asset and asset.device_type == 'Switch' %}selected{% endif %}>Switch</option>
+              <option value="Router" {% if asset and asset.device_type == 'Router' %}selected{% endif %}>Router</option>
+              <option value="Firewall" {% if asset and asset.device_type == 'Firewall' %}selected{% endif %}>Firewall</option>
+              <option value="Impresora" {% if asset and asset.device_type == 'Impresora' %}selected{% endif %}>Impresora</option>
+              <option value="UPS" {% if asset and asset.device_type == 'UPS' %}selected{% endif %}>UPS</option>
+              <option value="Otro" {% if asset and asset.device_type == 'Otro' %}selected{% endif %}>Otro</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Marca *</label>
+            <input type="text" class="form-control" name="brand" value="{{ asset.brand if asset else '' }}" required placeholder="Ej: Dell, HP, Cisco, Lenovo">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Modelo *</label>
+            <input type="text" class="form-control" name="model" value="{{ asset.model if asset else '' }}" required placeholder="Ej: PowerEdge R740, ThinkPad T14">
+          </div>
+
+          <div class="col-12"><hr class="border-secondary opacity-25 my-2"></div>
+          <h6 class="text-info fw-bold mb-2"><i class="bi bi-cpu me-1"></i> Especificaciones Técnicas</h6>
+
+          <div class="col-md-3">
+            <label class="form-label">Procesador (CPU)</label>
+            <input type="text" class="form-control" name="cpu" value="{{ asset.cpu if asset else '' }}" placeholder="Ej: Intel Xeon Silver / Core i7">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Memoria RAM</label>
+            <input type="text" class="form-control" name="ram" value="{{ asset.ram if asset else '' }}" placeholder="Ej: 16 GB DDR4">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Almacenamiento</label>
+            <input type="text" class="form-control" name="storage" value="{{ asset.storage if asset else '' }}" placeholder="Ej: 512 GB SSD NVMe">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Sistema Operativo</label>
+            <input type="text" class="form-control" name="os_installed" value="{{ asset.os_installed if asset else '' }}" placeholder="Ej: Windows 11 Pro / Ubuntu 22.04">
+          </div>
+
+          <div class="col-12"><hr class="border-secondary opacity-25 my-2"></div>
+          <h6 class="text-info fw-bold mb-2"><i class="bi bi-geo-alt me-1"></i> Asignación y Estado</h6>
+
+          <div class="col-md-5">
+            <label class="form-label">Cliente Propietario *</label>
+            <select class="form-select" id="client_id" name="client_id" required>
+              <option value="">-- Seleccionar Cliente --</option>
+              {% for c in clients %}
+              <option value="{{ c.id }}" {% if asset and asset.client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Sede / Ubicación</label>
+            <select class="form-select" id="location_id" name="location_id">
+              <option value="">-- Seleccionar Sede (Opcional) --</option>
+              {% if asset and asset.location %}
+              <option value="{{ asset.location.id }}" selected>{{ asset.location.name }}</option>
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Estado Operativo *</label>
+            <select class="form-select" name="status" required>
+              <option value="Operativo" {% if asset and asset.status == 'Operativo' %}selected{% endif %}>Operativo</option>
+              <option value="En Mantenimiento" {% if asset and asset.status == 'En Mantenimiento' %}selected{% endif %}>En Mantenimiento</option>
+              <option value="Dado de baja" {% if asset and asset.status == 'Dado de baja' %}selected{% endif %}>Dado de baja</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Notas Adicionales</label>
+            <textarea class="form-control" name="notes" rows="2" placeholder="Historial de garantía, contraseñas de gestión o detalles adicionales...">{{ asset.notes if asset else '' }}</textarea>
+          </div>
+
+          <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+            <a href="{{ url_for('assets.index') }}" class="btn btn-secondary-custom">Cancelar</a>
+            <button type="submit" class="btn btn-primary-custom">
+              <i class="bi bi-check-circle me-1"></i> Guardar Equipo
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

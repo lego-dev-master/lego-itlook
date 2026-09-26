@@ -1,0 +1,281 @@
+/* Lego ITlook Design System - Modern Tech Dark/Slate Theme */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --bg-sidebar: #090d16;
+  
+  --primary: #0ea5e9;
+  --primary-hover: #0284c7;
+  --accent: #14b8a6;
+  --accent-light: #2dd4bf;
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 20px rgba(14, 165, 233, 0.25);
+  
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Layout */
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.sidebar-brand {
+  padding: 1.5rem 1.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-brand span {
+  color: var(--primary);
+}
+
+.sidebar-nav {
+  padding: 1rem 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-link-custom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-link-custom:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+.nav-link-custom.active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.25) 0%, rgba(20, 184, 166, 0.25) 100%);
+  border: 1px solid rgba(14, 165, 233, 0.3);
+  box-shadow: var(--shadow-glow);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.topbar {
+  height: 64px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+}
+
+.content-body {
+  padding: 2rem;
+  flex: 1;
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.card-stat {
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-stat .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.stat-icon.primary { background: rgba(14, 165, 233, 0.15); color: var(--primary); }
+.stat-icon.success { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.stat-icon.warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.stat-icon.danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+}
+
+.stat-label {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Tables */
+.table-custom {
+  color: var(--text-main);
+  margin: 0;
+}
+
+.table-custom th {
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table-custom td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+.table-custom tbody tr {
+  transition: background 0.15s ease;
+}
+
+.table-custom tbody tr:hover {
+  background: rgba(51, 65, 85, 0.4);
+}
+
+/* Badges */
+.badge-status {
+  padding: 0.35em 0.75em;
+  border-radius: 50rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Buttons */
+.btn-primary-custom {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-custom:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+  color: #fff;
+}
+
+.btn-secondary-custom {
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+}
+
+.btn-secondary-custom:hover {
+  background: #475569;
+  color: #fff;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+  background-color: #0f172a;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.9rem;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: #0f172a;
+  border-color: var(--primary);
+  color: var(--text-main);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+}
+
+.form-label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+  }
+  .sidebar.show {
+    left: 0;
+  }
+}
