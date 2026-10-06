@@ -28,6 +28,20 @@ class Asset(db.Model):
     # Relationships
     maintenance_logs = db.relationship('MaintenanceLog', backref='asset', lazy=True, cascade='all, delete-orphan')
     tickets = db.relationship('Ticket', backref='asset', lazy=True)
+    maintenance_items = db.relationship('MaintenanceEventItem', backref='asset', lazy=True)
+
+    @property
+    def maintenance_records(self):
+        """Bitácora del equipo: ítems de eventos de mantenimiento TERMINADOS.
+
+        La bitácora se alimenta exclusivamente del módulo de mantenimientos
+        (req-03, punto 2.3). Devuelve los ítems ordenados por fecha de cierre
+        descendente (el más reciente primero).
+        """
+        from app.models.maintenance import MaintenanceEvent
+        items = [it for it in self.maintenance_items
+                 if it.event and it.event.status == MaintenanceEvent.STATUS_DONE]
+        return sorted(items, key=lambda it: it.event.finished_at or it.event.opened_at, reverse=True)
 
     def __repr__(self):
         return f"<Asset {self.internal_code} - {self.brand} {self.model}>"

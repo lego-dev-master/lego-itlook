@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Eventos de Mantenimiento{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-tools text-info me-2"></i>Mantenimiento de Equipos</h2>
+    <p class="text-muted mb-0">Eventos de mantenimiento preventivo y correctivo asociados a clientes y sus equipos</p>
+  </div>
+  <a href="{{ url_for('maintenance.create') }}" class="btn btn-primary-custom">
+    <i class="bi bi-plus-circle me-1"></i> Aperturar Evento
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="glass-card p-3 mb-4">
+  <form method="GET" action="{{ url_for('maintenance.index') }}" class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label small text-muted">Cliente</label>
+      <select class="form-select" name="client_id" onchange="this.form.submit()">
+        <option value="">-- Todos los Clientes --</option>
+        {% for c in clients %}
+        <option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small text-muted">Estado</label>
+      <select class="form-select" name="status" onchange="this.form.submit()">
+        <option value="">-- Todos los Estados --</option>
+        {% for st in status_choices %}
+        <option value="{{ st }}" {% if status_filter == st %}selected{% endif %}>{{ st }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+      <a href="{{ url_for('maintenance.index') }}" class="btn btn-secondary-custom w-100">
+        <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- Events Table -->
+<div class="glass-card p-4">
+  <div class="table-responsive">
+    <table class="table table-custom">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Tipo</th>
+          <th>Equipos</th>
+          <th>Técnico</th>
+          <th>Apertura</th>
+          <th>Terminación</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in events %}
+        <tr>
+          <td class="fw-bold text-info">#{{ e.id }}</td>
+          <td>
+            <div class="fw-bold text-white">{{ e.client.company_name }}</div>
+          </td>
+          <td><span class="badge {{ e.type_badge_class }}">{{ e.maintenance_type }}</span></td>
+          <td>
+            <span class="badge bg-dark border border-secondary text-light">
+              <i class="bi bi-pc-display me-1"></i>{{ e.items|length }} equipo(s)
+            </span>
+          </td>
+          <td>
+            {% if e.technician %}
+              <small class="text-white"><i class="bi bi-person-circle me-1"></i>{{ e.technician.name }}</small>
+            {% else %}
+              <span class="badge bg-secondary">Sin Asignar</span>
+            {% endif %}
+          </td>
+          <td class="small">{{ e.opened_at.strftime('%Y-%m-%d %H:%M') if e.opened_at else '-' }}</td>
+          <td class="small">
+            {% if e.finished_at %}
+              {{ e.finished_at.strftime('%Y-%m-%d %H:%M') }}
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </td>
+          <td><span class="badge {{ e.status_badge_class }}">{{ e.status }}</span></td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('maintenance.detail', event_id=e.id) }}" class="btn btn-sm btn-outline-info">
+                Gestionar <i class="bi bi-arrow-right"></i>
+              </a>
+              <a href="{{ url_for('maintenance.export_pdf', event_id=e.id) }}"
+                 class="btn btn-sm btn-outline-danger" title="Generar Informe PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-5">
+            <i class="bi bi-tools fs-1 d-block mb-3 text-info"></i>
+            No hay eventos de mantenimiento registrados con los criterios seleccionados.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

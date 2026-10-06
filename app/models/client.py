@@ -20,6 +20,7 @@ class Client(db.Model):
     assets = db.relationship('Asset', backref='client', lazy=True, cascade='all, delete-orphan')
     licenses = db.relationship('MicrosoftLicense', backref='client', lazy=True, cascade='all, delete-orphan')
     tickets = db.relationship('Ticket', backref='client', lazy=True, cascade='all, delete-orphan')
+    maintenance_events = db.relationship('MaintenanceEvent', backref='client', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<Client {self.company_name}>"

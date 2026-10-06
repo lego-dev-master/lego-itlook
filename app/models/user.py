@@ -18,6 +18,7 @@ class User(UserMixin, db.Model):
     tickets_assigned = db.relationship('Ticket', backref='assigned_to_user', lazy=True, foreign_keys='Ticket.assigned_to_id')
     maintenance_logs = db.relationship('MaintenanceLog', backref='technician', lazy=True)
     interventions = db.relationship('TicketIntervention', backref='technician', lazy=True)
+    maintenance_events = db.relationship('MaintenanceEvent', backref='technician', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

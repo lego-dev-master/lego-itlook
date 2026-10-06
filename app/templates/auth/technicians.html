@@ -32,6 +32,19 @@
           </span>
         </div>
       </div>
+      <div class="d-flex flex-column gap-2">
+        <button class="btn btn-sm btn-secondary-custom" title="Editar Usuario"
+                data-bs-toggle="modal" data-bs-target="#editTechModal{{ tech.id }}">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <form method="POST" action="{{ url_for('auth.toggle_user_status', user_id=tech.id) }}"
+              onsubmit="return confirm('¿Está seguro de cambiar el estado de este usuario?');">
+          <button type="submit" class="btn btn-sm {% if tech.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                  title="{% if tech.is_active %}Inactivar{% else %}Activar{% endif %}" {% if tech.id == current_user.id %}disabled{% endif %}>
+            <i class="bi bi-power"></i>
+          </button>
+        </form>
+      </div>
     </div>
   </div>
   {% endfor %}
@@ -75,4 +88,49 @@
     </div>
   </div>
 </div>
+
+<!-- Modals Edit User -->
+{% for tech in technicians %}
+<div class="modal fade" id="editTechModal{{ tech.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title"><i class="bi bi-pencil-square text-info me-2"></i> Editar Usuario</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('auth.edit_user', user_id=tech.id) }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo</label>
+            <input type="text" class="form-control" name="name" value="{{ tech.name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" name="email" value="{{ tech.email }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nueva Contraseña <span class="text-muted small">(dejar vacío para mantener la actual)</span></label>
+            <input type="password" class="form-control" name="password" placeholder="••••••••">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rol del Sistema</label>
+            <select class="form-select" name="role" required {% if tech.id == current_user.id %}disabled{% endif %}>
+              <option value="tech" {% if tech.role == 'tech' %}selected{% endif %}>Técnico de Soporte</option>
+              <option value="admin" {% if tech.role == 'admin' %}selected{% endif %}>Administrador del Sistema</option>
+            </select>
+            {% if tech.id == current_user.id %}
+              <input type="hidden" name="role" value="{{ tech.role }}">
+              <small class="text-muted">No puede cambiar su propio rol.</small>
+            {% endif %}
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary-custom">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
 {% endblock %}

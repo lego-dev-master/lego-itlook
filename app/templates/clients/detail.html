@@ -61,6 +61,11 @@
       <i class="bi bi-ticket-perforated me-1"></i> Tickets ({{ client.tickets|length }})
     </button>
   </li>
+  <li class="nav-item">
+    <button class="nav-link bg-dark text-white border border-secondary" id="maintenance-tab" data-bs-toggle="tab" data-bs-target="#maintenance" type="button">
+      <i class="bi bi-tools me-1"></i> Mantenimientos ({{ client.maintenance_events|length }})
+    </button>
+  </li>
 </ul>
 
 <div class="tab-content" id="clientTabsContent">
@@ -120,6 +125,7 @@
               <th>Dirección</th>
               <th>Contacto Local</th>
               <th>Teléfono</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -130,10 +136,23 @@
               <td>{{ loc.address or '-' }}</td>
               <td>{{ loc.contact_person or '-' }}</td>
               <td>{{ loc.contact_phone or '-' }}</td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-secondary-custom" title="Editar Sede"
+                          data-bs-toggle="modal" data-bs-target="#editLocationModal{{ loc.id }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <form method="POST" action="{{ url_for('clients.delete_location', client_id=client.id, location_id=loc.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar esta sede? Los equipos y tickets asociados quedarán sin sede asignada.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Sede">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="5" class="text-center text-muted py-4">No hay sedes adicionales registradas para este cliente.</td>
+              <td colspan="6" class="text-center text-muted py-4">No hay sedes adicionales registradas para este cliente.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -179,11 +198,17 @@
                 {% endif %}
               </td>
               <td>
-                <form method="POST" action="{{ url_for('clients.delete_contact', client_id=client.id, contact_id=c.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este contacto?');">
-                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Contacto">
-                    <i class="bi bi-trash"></i>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-secondary-custom" title="Editar Contacto"
+                          data-bs-toggle="modal" data-bs-target="#editContactModal{{ c.id }}">
+                    <i class="bi bi-pencil"></i>
                   </button>
-                </form>
+                  <form method="POST" action="{{ url_for('clients.delete_contact', client_id=client.id, contact_id=c.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este contacto?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Contacto">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
             {% else %}
@@ -232,7 +257,14 @@
                 </span>
               </td>
               <td>
-                <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn btn-sm btn-outline-info">Ver Hoja de Vida</a>
+                <div class="d-flex gap-2">
+                  <a href="{{ url_for('assets.detail', asset_id=a.id) }}" class="btn btn-sm btn-outline-info">Ver Hoja de Vida</a>
+                  <form method="POST" action="{{ url_for('assets.delete_asset', asset_id=a.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este equipo? Sus bitácoras de mantenimiento se borrarán y los tickets asociados quedarán sin equipo.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Equipo">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
             {% else %}
@@ -357,6 +389,52 @@
       </div>
     </div>
   </div>
+
+  <!-- Tab 6: Maintenance Events -->
+  <div class="tab-pane fade" id="maintenance">
+    <div class="glass-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-info"><i class="bi bi-tools me-2"></i>Eventos de Mantenimiento</h5>
+        <a href="{{ url_for('maintenance.create') }}?client_id={{ client.id }}" class="btn btn-sm btn-primary-custom">
+          <i class="bi bi-plus"></i> Aperturar Evento
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tipo</th>
+              <th>Equipos</th>
+              <th>Técnico</th>
+              <th>Apertura</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in client.maintenance_events|sort(attribute='opened_at', reverse=True) %}
+            <tr>
+              <td class="fw-bold text-info">#{{ e.id }}</td>
+              <td><span class="badge {{ e.type_badge_class }}">{{ e.maintenance_type }}</span></td>
+              <td>{{ e.items|length }} equipo(s)</td>
+              <td>{{ e.technician.name if e.technician else 'Sin Asignar' }}</td>
+              <td class="small">{{ e.opened_at.strftime('%Y-%m-%d %H:%M') if e.opened_at else '-' }}</td>
+              <td><span class="badge {{ e.status_badge_class }}">{{ e.status }}</span></td>
+              <td>
+                <a href="{{ url_for('maintenance.detail', event_id=e.id) }}" class="btn btn-sm btn-outline-info">Gestionar</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">No hay eventos de mantenimiento para este cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal Add Location -->
@@ -399,6 +477,48 @@
   </div>
 </div>
 
+<!-- Modals Edit Location -->
+{% for loc in client.locations %}
+<div class="modal fade" id="editLocationModal{{ loc.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title"><i class="bi bi-pencil-square text-info me-2"></i> Editar Sede</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('clients.edit_location', client_id=client.id, location_id=loc.id) }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre de Sede *</label>
+            <input type="text" class="form-control" name="name" value="{{ loc.name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ciudad</label>
+            <input type="text" class="form-control" name="city" value="{{ loc.city or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control" name="address" value="{{ loc.address or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Persona de Contacto Local</label>
+            <input type="text" class="form-control" name="contact_person" value="{{ loc.contact_person or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Teléfono Local</label>
+            <input type="text" class="form-control" name="contact_phone" value="{{ loc.contact_phone or '' }}">
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary-custom">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
 <!-- Modal Add Contact -->
 <div class="modal fade" id="addContactModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -438,5 +558,47 @@
     </div>
   </div>
 </div>
+
+<!-- Modals Edit Contact -->
+{% for c in client.contacts %}
+<div class="modal fade" id="editContactModal{{ c.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary border-opacity-25">
+        <h5 class="modal-title"><i class="bi bi-pencil-square text-info me-2"></i> Editar Contacto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('clients.edit_contact', client_id=client.id, contact_id=c.id) }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Nombre Completo *</label>
+            <input type="text" class="form-control" name="name" value="{{ c.name }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Correo Electrónico *</label>
+            <input type="email" class="form-control" name="email" value="{{ c.email }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Teléfono / Extensión</label>
+            <input type="text" class="form-control" name="phone" value="{{ c.phone or '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Cargo / Departamento</label>
+            <input type="text" class="form-control" name="position" value="{{ c.position or '' }}">
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="edit_is_primary_{{ c.id }}" name="is_primary" value="1" {% if c.is_primary %}checked{% endif %}>
+            <label class="form-check-label small text-muted" for="edit_is_primary_{{ c.id }}">Establecer como contacto principal del cliente</label>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-25">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary-custom">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
 {% endblock %}
 

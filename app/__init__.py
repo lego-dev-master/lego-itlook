@@ -28,6 +28,7 @@ def create_app(config_name='dev'):
     from app.routes.licenses import licenses_bp
     from app.routes.tickets import tickets_bp
     from app.routes.settings import settings_bp
+    from app.routes.maintenance import maintenance_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -35,6 +36,7 @@ def create_app(config_name='dev'):
     app.register_blueprint(assets_bp, url_prefix='/assets')
     app.register_blueprint(licenses_bp, url_prefix='/licenses')
     app.register_blueprint(tickets_bp, url_prefix='/tickets')
+    app.register_blueprint(maintenance_bp, url_prefix='/maintenance')
     app.register_blueprint(settings_bp, url_prefix='/settings')
 
 

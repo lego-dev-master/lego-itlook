@@ -17,12 +17,17 @@
     <p class="text-muted mb-0">Cliente: {{ asset.client.company_name }} | Serial: {{ asset.serial_number or 'Sin Serial' }}</p>
   </div>
   <div class="d-flex gap-2">
-    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addMaintenanceModal">
-      <i class="bi bi-tools me-1"></i> Registrar Mantenimiento
-    </button>
+    <a href="{{ url_for('maintenance.create') }}?client_id={{ asset.client_id }}" class="btn btn-primary-custom">
+      <i class="bi bi-calendar-plus me-1"></i> Aperturar Evento de Mantenimiento
+    </a>
     <a href="{{ url_for('assets.edit', asset_id=asset.id) }}" class="btn btn-secondary-custom">
       <i class="bi bi-pencil me-1"></i> Editar
     </a>
+    <form method="POST" action="{{ url_for('assets.delete_asset', asset_id=asset.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este equipo de la Hoja de Vida? Sus bitácoras de mantenimiento se borrarán y los tickets asociados quedarán sin equipo.');">
+      <button type="submit" class="btn btn-outline-danger">
+        <i class="bi bi-trash me-1"></i> Eliminar
+      </button>
+    </form>
   </div>
 </div>
 
@@ -77,97 +82,84 @@
     </div>
   </div>
 
-  <!-- Maintenance Logs Timeline (RF-04) -->
+  <!-- Bitácora de Mantenimientos (alimentada por el módulo de mantenimientos) -->
   <div class="col-lg-8">
     <div class="glass-card p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0 text-info"><i class="bi bi-journal-check me-2"></i>Bitácora de Mantenimientos</h5>
-        <span class="badge bg-dark border border-secondary text-muted">{{ asset.maintenance_logs|length }} registros</span>
+        <span class="badge bg-dark border border-secondary text-muted">{{ asset.maintenance_records|length }} registros</span>
       </div>
+      <p class="text-muted small mb-3">
+        <i class="bi bi-info-circle me-1"></i>
+        La bitácora se alimenta automáticamente de los eventos de mantenimiento <strong>terminados</strong> del módulo de Mantenimientos.
+      </p>
 
       <div class="timeline">
-        {% for log in asset.maintenance_logs|sort(attribute='date', reverse=True) %}
+        {% for item in asset.maintenance_records %}
+        {% set event = item.event %}
         <div class="p-3 mb-3 glass-card bg-dark bg-opacity-50 border-secondary border-opacity-25">
-          <div class="d-flex justify-content-between align-items-start mb-2">
+          <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
             <div>
-              <span class="badge {% if log.log_type == 'Preventivo' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %} me-2">
-                {{ log.log_type }}
+              <span class="badge {% if event.maintenance_type == 'Preventivo' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %} me-2">
+                {{ event.maintenance_type }}
               </span>
-              <strong class="text-white">{{ log.date.strftime('%Y-%m-%d %H:%M') }}</strong>
+              <span class="badge bg-success me-2">Terminado</span>
+              <strong class="text-white">Evento #{{ event.id }}</strong>
             </div>
-            <span class="small text-muted"><i class="bi bi-person me-1"></i>{{ log.technician.name }}</span>
+            <a href="{{ url_for('maintenance.detail', event_id=event.id) }}" class="btn btn-sm btn-outline-info">
+              Ver evento <i class="bi bi-arrow-right"></i>
+            </a>
           </div>
 
-          <p class="text-light mb-2">{{ log.description }}</p>
+          <div class="small text-muted mb-2">
+            <i class="bi bi-calendar-event me-1"></i>
+            Apertura: <strong class="text-light">{{ event.opened_at.strftime('%Y-%m-%d %H:%M') if event.opened_at else '-' }}</strong>
+            &nbsp;|&nbsp;
+            <i class="bi bi-calendar-check me-1"></i>
+            Cierre: <strong class="text-light">{{ event.finished_at.strftime('%Y-%m-%d %H:%M') if event.finished_at else '-' }}</strong>
+            &nbsp;|&nbsp;
+            <i class="bi bi-person me-1"></i>
+            Técnico: <strong class="text-light">{{ event.technician.name if event.technician else 'Sin Asignar' }}</strong>
+          </div>
 
-          <div class="d-flex justify-content-between align-items-center small text-muted pt-2 border-top border-secondary border-opacity-10">
-            <span>Costo Asociado: <strong class="text-white">${{ "%.2f"|format(log.cost or 0) }}</strong></span>
-            {% if log.attachment_filename %}
-            <a href="{{ url_for('static', filename='uploads/' + log.attachment_filename) }}" target="_blank" class="text-info text-decoration-none">
-              <i class="bi bi-paperclip"></i> Ver Adjunto (PDF/Imagen)
-            </a>
+          {% if event.observations %}
+          <p class="text-light mb-2"><i class="bi bi-journal-text me-1"></i>{{ event.observations }}</p>
+          {% endif %}
+
+          {% if item.notes %}
+          <p class="text-light mb-2 small"><i class="bi bi-chat-left-text me-1"></i>Nota del equipo: {{ item.notes }}</p>
+          {% endif %}
+
+          {% if item.photo_before or item.photo_after %}
+          <div class="row g-2 pt-2 border-top border-secondary border-opacity-10">
+            {% if item.photo_before %}
+            <div class="col-6">
+              <div class="small text-muted mb-1">Antes</div>
+              <a href="{{ url_for('static', filename='uploads/' + item.photo_before) }}" target="_blank">
+                <img src="{{ url_for('static', filename='uploads/' + item.photo_before) }}"
+                     class="img-fluid rounded border border-secondary" style="max-height:120px; object-fit:cover;">
+              </a>
+            </div>
+            {% endif %}
+            {% if item.photo_after %}
+            <div class="col-6">
+              <div class="small text-muted mb-1">Después</div>
+              <a href="{{ url_for('static', filename='uploads/' + item.photo_after) }}" target="_blank">
+                <img src="{{ url_for('static', filename='uploads/' + item.photo_after) }}"
+                     class="img-fluid rounded border border-secondary" style="max-height:120px; object-fit:cover;">
+              </a>
+            </div>
             {% endif %}
           </div>
+          {% endif %}
         </div>
         {% else %}
         <div class="text-center text-muted py-5">
           <i class="bi bi-tools fs-1 d-block mb-2 text-info"></i>
-          No hay mantenimientos registrados aún en la hoja de vida de este equipo.
+          No hay mantenimientos terminados registrados aún para este equipo.
         </div>
         {% endfor %}
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Add Maintenance Log -->
-<div class="modal fade" id="addMaintenanceModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content glass-card border-0">
-      <div class="modal-header border-bottom border-secondary border-opacity-25">
-        <h5 class="modal-title"><i class="bi bi-tools text-info me-2"></i> Registrar Bitácora de Mantenimiento</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <form method="POST" action="{{ url_for('assets.add_maintenance', asset_id=asset.id) }}" enctype="multipart/form-data">
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Tipo de Mantenimiento *</label>
-            <select class="form-select" name="log_type" required>
-              <option value="Preventivo">Preventivo</option>
-              <option value="Correctivo">Correctivo</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Descripción de las Actividades Realizadas *</label>
-            <textarea class="form-control" name="description" rows="3" required placeholder="Detalle limpieza de componentes, cambio de disco, instalación de parches..."></textarea>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Costo Asociado ($ USD / COP)</label>
-            <input type="number" step="0.01" class="form-control" name="cost" value="0.00">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Nuevo Estado del Equipo</label>
-            <select class="form-select" name="new_asset_status">
-              <option value="Operativo" {% if asset.status == 'Operativo' %}selected{% endif %}>Operativo</option>
-              <option value="En Mantenimiento" {% if asset.status == 'En Mantenimiento' %}selected{% endif %}>En Mantenimiento</option>
-              <option value="Dado de baja" {% if asset.status == 'Dado de baja' %}selected{% endif %}>Dado de baja</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Sporte Fotográfico o Documento PDF</label>
-            <input type="file" class="form-control" name="attachment" accept=".pdf,.png,.jpg,.jpeg">
-            <small class="text-muted">Formatos permitidos: PDF, JPG, PNG (Máx 16MB)</small>
-          </div>
-        </div>
-        <div class="modal-footer border-top border-secondary border-opacity-25">
-          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary-custom">Guardar Mantenimiento</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>

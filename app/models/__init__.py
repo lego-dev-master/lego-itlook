@@ -4,6 +4,7 @@ from app.models.asset import Asset, MaintenanceLog
 from app.models.license import MicrosoftLicense
 from app.models.ticket import Ticket, TicketIntervention
 from app.models.setting import SystemSetting
+from app.models.maintenance import MaintenanceEvent, MaintenanceEventItem
 
 __all__ = [
     'User',
@@ -15,6 +16,8 @@ __all__ = [
     'MicrosoftLicense',
     'Ticket',
     'TicketIntervention',
-    'SystemSetting'
+    'SystemSetting',
+    'MaintenanceEvent',
+    'MaintenanceEventItem'
 ]
 

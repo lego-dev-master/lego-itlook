@@ -1,0 +1,26 @@
+# ============================================================
+#  Configuración Nginx SOLO HTTP (fase inicial, sin SSL aún)
+#  Usar SOLO durante el primer arranque para emitir el certificado.
+#  Renombra este archivo a app.conf (y guarda app.conf con SSL aparte).
+# ============================================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name itlook.midominio.co;
+
+    # Ruta para el challenge HTTP-01 de Certbot
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    client_max_body_size 20M;
+
+    location / {
+        proxy_pass http://web:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+}

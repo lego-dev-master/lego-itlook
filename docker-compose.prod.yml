@@ -1,0 +1,77 @@
+services:
+
+  db:
+    image: postgres:15-alpine
+    container_name: itlook_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - itlook_net
+    # No se expone el puerto al host por seguridad. Solo accesible en la red interna.
+
+  web:
+    build: .
+    container_name: itlook_web
+    command: >
+      gunicorn --workers 3 --bind 0.0.0.0:5000
+      --access-logfile - --error-logfile -
+      --timeout 120 wsgi:app
+    environment:
+      - FLASK_ENV=prod
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USE_TLS=${MAIL_USE_TLS}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+    volumes:
+      - uploads_data:/app/app/static/uploads
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - itlook_net
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: itlook_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    depends_on:
+      - web
+    restart: always
+    networks:
+      - itlook_net
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: itlook_certbot
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    entrypoint: /bin/sh
+    # El contenedor queda dormido; se invoca con `docker compose run --rm certbot ...`
+    command: -c "trap exit TERM; while :; do sleep 12h & wait $${!}; done;"
+    networks:
+      - itlook_net
+
+volumes:
+  postgres_data:
+  uploads_data:
+  certbot_www:
+  certbot_conf:
+
+networks:
+  itlook_net:
+    driver: bridge

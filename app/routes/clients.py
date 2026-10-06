@@ -144,6 +144,50 @@ def add_location(client_id):
     flash(f'Sede "{name}" agregada con éxito.', 'success')
     return redirect(url_for('clients.detail', client_id=client_id))
 
+@clients_bp.route('/<int:client_id>/edit-location/<int:location_id>', methods=['POST'])
+@login_required
+def edit_location(client_id, location_id):
+    location = Location.query.get_or_404(location_id)
+    if location.client_id != client_id:
+        flash('La sede no corresponde a este cliente.', 'danger')
+        return redirect(url_for('clients.detail', client_id=client_id))
+
+    name = request.form.get('name', '').strip()
+    if not name:
+        flash('El nombre de la sede es obligatorio.', 'warning')
+        return redirect(url_for('clients.detail', client_id=client_id))
+
+    location.name = name
+    location.address = request.form.get('address', '').strip()
+    location.city = request.form.get('city', '').strip()
+    location.contact_person = request.form.get('contact_person', '').strip()
+    location.contact_phone = request.form.get('contact_phone', '').strip()
+
+    db.session.commit()
+    flash(f'Sede "{location.name}" actualizada con éxito.', 'success')
+    return redirect(url_for('clients.detail', client_id=client_id))
+
+@clients_bp.route('/<int:client_id>/delete-location/<int:location_id>', methods=['POST'])
+@login_required
+def delete_location(client_id, location_id):
+    location = Location.query.get_or_404(location_id)
+    if location.client_id != client_id:
+        flash('La sede no corresponde a este cliente.', 'danger')
+        return redirect(url_for('clients.detail', client_id=client_id))
+
+    location_name = location.name
+
+    # Desvincular equipos y tickets asociados para evitar referencias rotas
+    for asset in location.assets:
+        asset.location_id = None
+    for ticket in location.tickets:
+        ticket.location_id = None
+
+    db.session.delete(location)
+    db.session.commit()
+    flash(f'Sede "{location_name}" eliminada correctamente.', 'info')
+    return redirect(url_for('clients.detail', client_id=client_id))
+
 @clients_bp.route('/api/<int:client_id>/locations')
 @login_required
 def api_locations(client_id):
@@ -179,6 +223,38 @@ def add_contact(client_id):
     db.session.add(new_contact)
     db.session.commit()
     flash(f'Contacto "{name}" agregado con éxito.', 'success')
+    return redirect(url_for('clients.detail', client_id=client_id))
+
+@clients_bp.route('/<int:client_id>/edit-contact/<int:contact_id>', methods=['POST'])
+@login_required
+def edit_contact(client_id, contact_id):
+    contact = ClientContact.query.get_or_404(contact_id)
+    if contact.client_id != client_id:
+        flash('El contacto no corresponde a este cliente.', 'danger')
+        return redirect(url_for('clients.detail', client_id=client_id))
+
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    phone = request.form.get('phone', '').strip()
+    position = request.form.get('position', '').strip()
+    is_primary = True if request.form.get('is_primary') else False
+
+    if not name or not email:
+        flash('Nombre y Correo del contacto son obligatorios.', 'warning')
+        return redirect(url_for('clients.detail', client_id=client_id))
+
+    if is_primary:
+        # Unset other primary contacts for this client
+        ClientContact.query.filter_by(client_id=client_id).update({'is_primary': False})
+
+    contact.name = name
+    contact.email = email
+    contact.phone = phone
+    contact.position = position
+    contact.is_primary = is_primary
+
+    db.session.commit()
+    flash(f'Contacto "{contact.name}" actualizado con éxito.', 'success')
     return redirect(url_for('clients.detail', client_id=client_id))
 
 @clients_bp.route('/<int:client_id>/delete-contact/<int:contact_id>', methods=['POST'])

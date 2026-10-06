@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Aperturar Evento de Mantenimiento{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{{ url_for('maintenance.index') }}" class="text-muted text-decoration-none small">
+    <i class="bi bi-arrow-left"></i> Volver a Mantenimientos
+  </a>
+  <h2 class="mt-2 mb-0"><i class="bi bi-tools text-info me-2"></i>Aperturar Evento de Mantenimiento</h2>
+  <p class="text-muted mb-0">Registre un evento que puede incluir uno o varios equipos de un mismo cliente</p>
+</div>
+
+<form method="POST" action="{{ url_for('maintenance.create') }}">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="glass-card p-4 mb-4">
+        <h5 class="mb-3 text-info"><i class="bi bi-info-square me-2"></i>Datos del Evento</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Cliente *</label>
+            <select class="form-select" name="client_id" id="clientSelect" required>
+              <option value="">-- Seleccionar Cliente --</option>
+              {% for c in clients %}
+              <option value="{{ c.id }}" {% if preselected_client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Técnico Responsable</label>
+            <select class="form-select" name="technician_id">
+              {% for t in technicians %}
+              <option value="{{ t.id }}" {% if t.id == current_user.id %}selected{% endif %}>{{ t.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Tipo de Mantenimiento *</label>
+            <select class="form-select" name="maintenance_type" required>
+              <option value="Preventivo">Preventivo</option>
+              <option value="Correctivo">Correctivo</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fecha y Hora de Apertura</label>
+            <input type="datetime-local" class="form-control" name="opened_at"
+                   value="{{ now.strftime('%Y-%m-%dT%H:%M') }}">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Observaciones del Técnico</label>
+            <textarea class="form-control" name="observations" rows="3"
+                      placeholder="Detalle el alcance del mantenimiento a realizar..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card p-4">
+        <h5 class="mb-3 text-info"><i class="bi bi-pc-display me-2"></i>Equipos a Incluir *</h5>
+        <p class="text-muted small">Seleccione uno o varios equipos del cliente seleccionado.</p>
+        <div id="assetsContainer" class="row g-2">
+          <div class="col-12 text-muted small">
+            <i class="bi bi-arrow-up me-1"></i>Seleccione primero un cliente para listar sus equipos.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="glass-card p-4">
+        <h5 class="mb-3 text-info"><i class="bi bi-lightbulb me-2"></i>Resumen</h5>
+        <p class="text-muted small">
+          El evento se creará en estado <span class="badge bg-primary">Abierto</span> con la fecha y hora de apertura.
+          Podrá agregar fotos (antes / después) y cambiar el estado dentro del detalle del evento.
+        </p>
+        <div class="d-grid gap-2 mt-4">
+          <button type="submit" class="btn btn-primary-custom">
+            <i class="bi bi-check-circle me-1"></i> Aperturar Evento
+          </button>
+          <a href="{{ url_for('maintenance.index') }}" class="btn btn-secondary-custom">Cancelar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const clientSelect = document.getElementById('clientSelect');
+  const assetsContainer = document.getElementById('assetsContainer');
+
+  function loadAssets(clientId) {
+    if (!clientId) {
+      assetsContainer.innerHTML = '<div class="col-12 text-muted small"><i class="bi bi-arrow-up me-1"></i>Seleccione primero un cliente para listar sus equipos.</div>';
+      return;
+    }
+    assetsContainer.innerHTML = '<div class="col-12 text-muted small">Cargando equipos...</div>';
+    fetch(`/assets/api/${clientId}/assets`)
+      .then(r => r.json())
+      .then(assets => {
+        if (!assets.length) {
+          assetsContainer.innerHTML = '<div class="col-12 text-muted small">Este cliente no tiene equipos registrados.</div>';
+          return;
+        }
+        assetsContainer.innerHTML = assets.map(a => `
+          <div class="col-md-6">
+            <div class="form-check glass-card p-2 px-3 border border-secondary border-opacity-25">
+              <input class="form-check-input" type="checkbox" name="asset_ids" value="${a.id}" id="asset_${a.id}">
+              <label class="form-check-label small text-light" for="asset_${a.id}">${a.name}</label>
+            </div>
+          </div>
+        `).join('');
+      })
+      .catch(() => {
+        assetsContainer.innerHTML = '<div class="col-12 text-danger small">Error al cargar los equipos.</div>';
+      });
+  }
+
+  clientSelect.addEventListener('change', () => loadAssets(clientSelect.value));
+  // Cargar si viene preseleccionado
+  if (clientSelect.value) loadAssets(clientSelect.value);
+</script>
+{% endblock %}

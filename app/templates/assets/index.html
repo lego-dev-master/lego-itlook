@@ -8,38 +8,61 @@
     <h2 class="mb-1"><i class="bi bi-pc-display text-info me-2"></i>Hojas de Vida de Equipos</h2>
     <p class="text-muted mb-0">Inventario técnico de hardware, mantenimientos preventivos y correctivos</p>
   </div>
-  <a href="{{ url_for('assets.create') }}" class="btn btn-primary-custom">
-    <i class="bi bi-plus-circle me-1"></i> Registrar Equipo
-  </a>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('assets.export_excel', client_id=request.args.get('client_id', ''),
+                        device_type=request.args.get('device_type', ''),
+                        status=request.args.get('status', ''),
+                        date_from=request.args.get('date_from', ''),
+                        date_to=request.args.get('date_to', '')) }}" class="btn btn-outline-success">
+      <i class="bi bi-file-earmark-excel-fill me-1"></i> Exportar Excel
+    </a>
+    <a href="{{ url_for('assets.create') }}" class="btn btn-primary-custom">
+      <i class="bi bi-plus-circle me-1"></i> Registrar Equipo
+    </a>
+  </div>
 </div>
 
 <!-- Filters -->
 <div class="glass-card p-3 mb-4">
   <form method="GET" action="{{ url_for('assets.index') }}" class="row g-3">
-    <div class="col-md-4">
+    <div class="col-md-3">
+      <label class="form-label small text-muted">Búsqueda</label>
       <div class="input-group">
         <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-search"></i></span>
         <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Código interno, serial, marca o modelo...">
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
+      <label class="form-label small text-muted">Cliente</label>
       <select class="form-select" name="client_id" onchange="this.form.submit()">
-        <option value="">-- Todos los Clientes --</option>
+        <option value="">-- Todos --</option>
         {% for c in clients %}
         <option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.company_name }}</option>
         {% endfor %}
       </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
+      <label class="form-label small text-muted">Tipo de Dispositivo</label>
       <select class="form-select" name="device_type" onchange="this.form.submit()">
-        <option value="">-- Tipo de Dispositivo --</option>
+        <option value="">-- Tipo --</option>
         {% for dt in device_types %}
         <option value="{{ dt }}" {% if device_type == dt %}selected{% endif %}>{{ dt }}</option>
         {% endfor %}
       </select>
     </div>
     <div class="col-md-2">
+      <label class="form-label small text-muted">Desde (Registro)</label>
+      <input type="date" class="form-control" name="date_from" value="{{ date_from or '' }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small text-muted">Hasta (Registro)</label>
+      <input type="date" class="form-control" name="date_to" value="{{ date_to or '' }}">
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
       <button type="submit" class="btn btn-secondary-custom w-100">Filtrar</button>
+    </div>
+    <div class="col-12">
+      <a href="{{ url_for('assets.index') }}" class="small text-muted text-decoration-none"><i class="bi bi-x-circle me-1"></i>Limpiar filtros</a>
     </div>
   </form>
 </div>
@@ -83,7 +106,7 @@
             </span>
           </td>
           <td>
-            <span class="badge bg-info text-dark fw-bold">{{ a.maintenance_logs|length }} mant.</span>
+            <span class="badge bg-info text-dark fw-bold">{{ a.maintenance_records|length }} mant.</span>
           </td>
           <td>
             <div class="btn-group btn-group-sm">
@@ -93,6 +116,11 @@
               <a href="{{ url_for('assets.edit', asset_id=a.id) }}" class="btn btn-secondary-custom" title="Editar">
                 <i class="bi bi-pencil"></i>
               </a>
+              <form method="POST" action="{{ url_for('assets.delete_asset', asset_id=a.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este equipo? Sus bitácoras de mantenimiento se borrarán y los tickets asociados quedarán sin equipo.');">
+                <button type="submit" class="btn btn-outline-danger" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
             </div>
           </td>
         </tr>

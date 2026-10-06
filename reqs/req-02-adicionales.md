@@ -24,3 +24,7 @@ El modulo de clientes debe permitir eliminar, modificar y agregar sedes a los cl
 En el modulo de hojas de vida se debe habilitar la opción de eliminación de un equipo. Actualmente solo permite agregar nuevos equipos. 
 ## 2.5 Modificación al modulo de contactos
 En el modulo de contactos se debe habilitar la opción de modificación de un contacto. Actualmente solo permite agregar nuevos contactos y eliminarlo. 
+## 2.6 Generar reporte a excel de tickets
+Generar reporte a excel de todos los tickets de servicio en donde se puedan filtrar por cliente y fecha. Es una funcionalidad muy similar al reporte que se genera en el módulo de licenciamiento.
+## 2.7 Generar reporte a excel de Hojas de vida de equipos
+Generar reporte a excel de las hojas de vida equipos  en donde se puedan filtrar por cliente y fecha. Es una funcionalidad muy similar al reporte que se genera en el módulo de licenciamiento.  

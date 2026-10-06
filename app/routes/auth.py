@@ -67,3 +67,63 @@ def technicians():
 
     techs = User.query.all()
     return render_template('auth/technicians.html', technicians=techs)
+
+@auth_bp.route('/technicians/<int:user_id>/edit', methods=['POST'])
+@login_required
+def edit_user(user_id):
+    if not current_user.is_admin:
+        flash('Acceso denegado: Se requieren permisos de Administrador.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+    user = User.query.get_or_404(user_id)
+
+    name = request.form.get('name', '').strip()
+    email = request.form.get('email', '').strip()
+    role = request.form.get('role', 'tech')
+    password = request.form.get('password', '').strip()
+
+    if not name or not email:
+        flash('El nombre y el correo electrónico son obligatorios.', 'warning')
+        return redirect(url_for('auth.technicians'))
+
+    # Check email uniqueness (excluding the current user)
+    existing = User.query.filter_by(email=email).first()
+    if existing and existing.id != user.id:
+        flash('El correo electrónico ya está registrado por otro usuario.', 'warning')
+        return redirect(url_for('auth.technicians'))
+
+    # Prevent an admin from removing their own admin role
+    if user.id == current_user.id and role != 'admin':
+        flash('No puede cambiar su propio rol de Administrador.', 'warning')
+        return redirect(url_for('auth.technicians'))
+
+    user.name = name
+    user.email = email
+    user.role = role
+
+    if password:
+        user.set_password(password)
+
+    db.session.commit()
+    flash(f'Usuario {user.name} actualizado con éxito.', 'success')
+    return redirect(url_for('auth.technicians'))
+
+@auth_bp.route('/technicians/<int:user_id>/toggle-status', methods=['POST'])
+@login_required
+def toggle_user_status(user_id):
+    if not current_user.is_admin:
+        flash('Acceso denegado: Se requieren permisos de Administrador.', 'danger')
+        return redirect(url_for('dashboard.index'))
+
+    user = User.query.get_or_404(user_id)
+
+    if user.id == current_user.id:
+        flash('No puede inactivar su propia cuenta.', 'warning')
+        return redirect(url_for('auth.technicians'))
+
+    user.is_active = not user.is_active
+    db.session.commit()
+    status_str = "activado" if user.is_active else "inactivado"
+    flash(f'Usuario {user.name} ha sido {status_str}.', 'info')
+    return redirect(url_for('auth.technicians'))
+

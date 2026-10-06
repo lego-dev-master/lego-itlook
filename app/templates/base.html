@@ -33,6 +33,9 @@
       <a href="{{ url_for('assets.index') }}" class="nav-link-custom {% if 'assets' in request.endpoint %}active{% endif %}">
         <i class="bi bi-pc-display"></i> Hojas de Vida
       </a>
+      <a href="{{ url_for('maintenance.index') }}" class="nav-link-custom {% if 'maintenance' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-tools"></i> Mantenimientos
+      </a>
       <a href="{{ url_for('licenses.index') }}" class="nav-link-custom {% if 'licenses' in request.endpoint %}active{% endif %}">
         <i class="bi bi-microsoft"></i> Licenciamiento M365
       </a>
